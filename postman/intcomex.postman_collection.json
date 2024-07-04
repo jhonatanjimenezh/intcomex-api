@@ -1,0 +1,558 @@
+{
+	"info": {
+		"_postman_id": "c72ef1c8-1cd6-4f59-9b43-d2dd73ce301b",
+		"name": "intcomex",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "25756408"
+	},
+	"item": [
+		{
+			"name": "category",
+			"item": [
+				{
+					"name": "create_category",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"SERVIDORES\",\n    \"imageUrl\": \"http://intcomex.s3.aws.com\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:8080/intcomex-api/category",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"intcomex-api",
+								"category"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "update_category",
+					"request": {
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"SERVIDORES\",\n    \"imageUrl\": \"http://intcomex.s3.aws.com\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:8080/intcomex-api/category/1",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"intcomex-api",
+								"category",
+								"1"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "get_all_categories",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8080/intcomex-api/category",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"intcomex-api",
+								"category"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "get_by_id_category",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8080/intcomex-api/categories/1",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"intcomex-api",
+								"categories",
+								"1"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "delete_category",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8080/intcomex-api/category/2",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"intcomex-api",
+								"category",
+								"2"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "product",
+			"item": [
+				{
+					"name": "create_product",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"prueba\",\n    \"price\": 10000.00,    \n    \"category\": {\n        \"id\": 2\n    }\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:8080/intcomex-api/product",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"intcomex-api",
+								"product"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "update_product",
+					"request": {
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"prueba\",\n    \"price\": 1120.00,    \n    \"category\": {\n        \"id\": 2\n    }\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:8080/intcomex-api/product/1",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"intcomex-api",
+								"product",
+								"1"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "get_all_products",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8080/intcomex-api/product?page=0&size=10",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"intcomex-api",
+								"product"
+							],
+							"query": [
+								{
+									"key": "page",
+									"value": "0"
+								},
+								{
+									"key": "size",
+									"value": "10"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "get_by_id_product",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8080/intcomex-api/product/1",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"intcomex-api",
+								"product",
+								"1"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "delete_category",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8080/intcomex-api/product/1",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"intcomex-api",
+								"product",
+								"1"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "testing",
+			"item": [
+				{
+					"name": "create_category_servidores",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"let jsonData = pm.response.json();",
+									"pm.environment.set(\"servidoresCategoryId\", jsonData.data.id);",
+									"postman.setNextRequest(\"create_category_cloud\");",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"SERVIDORES\",\n    \"imageUrl\": \"http://intcomex.s3.aws.com\"\n}\n",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:8080/intcomex-api/category",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"intcomex-api",
+								"category"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "create_category_cloud",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"let jsonData = pm.response.json();",
+									"pm.environment.set(\"cloudCategoryId\", jsonData.data.id);",
+									"postman.setNextRequest(\"create_products_batch\");",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"CLOUD\",\n    \"imageUrl\": \"http://intcomex.s3.aws.com\"\n}\n",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:8080/intcomex-api/category",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"intcomex-api",
+								"category"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "create_products_batch",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"let servidoresCategoryId = pm.environment.get(\"servidoresCategoryId\");",
+									"let cloudCategoryId = pm.environment.get(\"cloudCategoryId\");",
+									"",
+									"if (!servidoresCategoryId || !cloudCategoryId) {",
+									"    postman.setNextRequest(\"create_category_servidores\");",
+									"} else {",
+									"    let products = [];",
+									"    for (let i = 0; i < 100000; i++) {",
+									"        let categoryId = i % 2 === 0 ? servidoresCategoryId : cloudCategoryId;",
+									"        products.push({",
+									"            \"name\": \"Product \" + i,",
+									"            \"price\": Math.floor(Math.random() * 1000) + 1,",
+									"            \"category\": {",
+									"                \"id\": categoryId",
+									"            }",
+									"        });",
+									"    }",
+									"",
+									"    // Dividir los productos en lotes de 100",
+									"    let productBatches = [];",
+									"    for (let i = 0; i < products.length; i += 100) {",
+									"        productBatches.push(products.slice(i, i + 100));",
+									"    }",
+									"",
+									"    pm.environment.set(\"productBatches\", JSON.stringify(productBatches));",
+									"    pm.environment.set(\"currentBatchIndex\", 0);",
+									"    postman.setNextRequest(\"send_product\");",
+									"}",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "\n",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:8080/intcomex-api/prepare-products",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"intcomex-api",
+								"prepare-products"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "send_product",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"let productBatches = JSON.parse(pm.environment.get(\"productBatches\"));",
+									"let currentBatchIndex = pm.environment.get(\"currentBatchIndex\");",
+									"",
+									"if (currentBatchIndex < productBatches.length) {",
+									"    let currentBatch = productBatches[currentBatchIndex];",
+									"",
+									"    if (currentBatch.length > 0) {",
+									"        let currentProduct = currentBatch.shift();",
+									"",
+									"        // Actualizar el lote en el ambiente",
+									"        productBatches[currentBatchIndex] = currentBatch;",
+									"        pm.environment.set(\"productBatches\", JSON.stringify(productBatches));",
+									"        ",
+									"        // Si el lote actual está vacío, pasar al siguiente lote",
+									"        if (currentBatch.length === 0) {",
+									"            currentBatchIndex++;",
+									"            pm.environment.set(\"currentBatchIndex\", currentBatchIndex);",
+									"        }",
+									"",
+									"        // Configurar el producto actual en el ambiente",
+									"        pm.environment.set(\"currentProduct\", JSON.stringify(currentProduct));",
+									"",
+									"        // Continuar con la siguiente solicitud",
+									"        postman.setNextRequest(\"create_product\");",
+									"    } else {",
+									"        currentBatchIndex++;",
+									"        pm.environment.set(\"currentBatchIndex\", currentBatchIndex);",
+									"        postman.setNextRequest(\"send_product\");",
+									"    }",
+									"} else {",
+									"    postman.setNextRequest(null); // Finalizar la ejecución",
+									"}",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{{currentBatch}}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:8080/intcomex-api/prepare-products",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"intcomex-api",
+								"prepare-products"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "create_product",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"postman.setNextRequest(\"send_product\");"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{{currentProduct}}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:8080/intcomex-api/product",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"intcomex-api",
+								"product"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		}
+	]
+}

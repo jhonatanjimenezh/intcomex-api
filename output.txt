@@ -1,0 +1,4663 @@
+----- ./build.gradle -----
+plugins {
+	id 'java'
+	id 'org.springframework.boot' version '3.3.1'
+	id 'io.spring.dependency-management' version '1.1.5'
+}
+
+group = 'com.intcomex'
+version = '0.0.1-SNAPSHOT'
+
+java {
+	toolchain {
+		languageVersion = JavaLanguageVersion.of(17)
+	}
+}
+
+repositories {
+	mavenCentral()
+}
+
+dependencies {
+	implementation 'org.springframework.boot:spring-boot-starter-web'
+	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+	implementation 'org.springframework.boot:spring-boot-starter-validation'
+	implementation 'org.springframework.boot:spring-boot-starter-actuator'
+	implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.1.0'
+	implementation 'io.github.cdimascio:java-dotenv:5.2.2'
+	implementation 'org.webjars:swagger-ui:3.52.5'
+	implementation 'org.webjars:webjars-locator-core:0.46'
+
+	compileOnly 'org.projectlombok:lombok'
+	developmentOnly 'org.springframework.boot:spring-boot-devtools'
+
+	runtimeOnly 'org.postgresql:postgresql'
+
+	annotationProcessor 'org.projectlombok:lombok'
+	annotationProcessor 'org.springframework.boot:spring-boot-configuration-processor'
+
+	testImplementation 'org.springframework.boot:spring-boot-starter-test'
+	testImplementation 'org.mockito:mockito-core'
+	testImplementation 'org.mockito:mockito-junit-jupiter'
+	testImplementation 'com.h2database:h2'
+
+	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+tasks.named('test') {
+	useJUnitPlatform()
+}
+
+----- ./README.md -----
+# Intcomex API
+
+## Descripción
+
+Intcomex API es un microservicio desarrollado en Java utilizando Spring Boot, diseñado para manejar la gestión de categorías y productos en una base de datos. La API permite la creación, actualización, eliminación y consulta de categorías y productos, con capacidades de paginación y búsqueda.
+
+## Características
+
+- Crear, actualizar, eliminar y listar categorías.
+- Crear, actualizar, eliminar y listar productos.
+- Paginación de productos.
+- Búsqueda de productos por ID y obtención de la imagen de la categoría asociada.
+- Integración de tests unitarios y de integración para asegurar la calidad del código.
+- Scripts en Postman para automatizar la creación de datos y pruebas.
+
+## Requisitos
+
+- Java 17
+- Spring Boot 3.3.1
+- Gradle 8
+- Docker
+- Postman (para la ejecución de los scripts de pruebas)
+
+## Instalación y Configuración
+
+1. Clona el repositorio:
+   ```bash
+   git clone https://github.com/tu_usuario/intcomex-api.git
+   cd intcomex-api
+   ```
+
+2. Configura el archivo de propiedades para pruebas en `src/main/resources/application-test.yml`:
+   ```yaml
+   spring:
+     datasource:
+       url: jdbc:h2:mem:testdb
+       driverClassName: org.h2.Driver
+       username: sa
+       password:
+     h2:
+       console:
+         enabled: true
+     jpa:
+       hibernate:
+         ddl-auto: update
+       show-sql: true
+   ```
+
+3. Construye el proyecto con Gradle:
+   ```bash
+   ./gradlew build
+   ```
+
+4. Ejecuta el proyecto:
+   ```bash
+   ./gradlew bootRun
+   ```
+
+## Despliegue con Docker
+
+1. Construye la imagen Docker:
+   ```bash
+   docker build -t intcomex-api .
+   ```
+
+2. Ejecuta el contenedor:
+   ```bash
+   docker run -d -p 8080:8080 intcomex-api
+   ```
+
+## Ejecución de Pruebas
+
+### Pruebas Unitarias
+
+Para ejecutar las pruebas unitarias, utiliza el siguiente comando:
+```bash
+./gradlew test
+```
+
+### Pruebas de Integración
+
+Las pruebas de integración están configuradas para ejecutarse automáticamente con Gradle. Puedes ejecutar todas las pruebas (unitarias e integración) con:
+```bash
+./gradlew integrationTest
+```
+
+## Uso de Postman
+
+Se ha configurado una colección de Postman para automatizar la creación de datos y pruebas.
+
+### Importación de la Colección
+
+1. Abre Postman.
+2. Ve a `File -> Import`.
+3. Selecciona el archivo `intcomex.postman_collection.json` proporcionado en este repositorio.
+4. La colección `intcomex` aparecerá en tus colecciones de Postman.
+
+### Ejecución de los Scripts
+
+1. En Postman, selecciona la colección `intcomex`.
+2. Selecciona la carpeta `test` que está dentro de la colección `intcomex`.
+3. Configuración `Run Folder`
+3. Selecciona los requests en este orden `create_category_servidores`, `create_category_cloud`, `create_products_batch`, `send_product`, `create_product`.
+4. Configura las iteraciones y otras opciones según tus necesidades.
+5. Ejecuta la colección. Esto creará las categorías y 100,000 productos en lotes.
+
+## Endpoints Principales
+
+### Categorías
+
+- **Crear Categoría**
+    - `POST /intcomex-api/category`
+    - Request Body:
+      ```json
+      {
+        "name": "SERVIDORES",
+        "imageUrl": "http://intcomex.s3.aws.com"
+      }
+      ```
+
+- **Actualizar Categoría**
+    - `PUT /intcomex-api/category/{id}`
+    - Request Body:
+      ```json
+      {
+        "name": "CLOUD",
+        "imageUrl": "http://intcomex.s3.aws.com"
+      }
+      ```
+
+- **Eliminar Categoría**
+    - `DELETE /intcomex-api/category/{id}`
+
+- **Listar Categorías**
+    - `GET /intcomex-api/category`
+
+### Productos
+
+- **Crear Producto**
+    - `POST /intcomex-api/product`
+    - Request Body:
+      ```json
+      {
+        "name": "Product 1",
+        "price": 100,
+        "category": {
+          "id": 1
+        }
+      }
+      ```
+
+- **Actualizar Producto**
+    - `PUT /intcomex-api/product/{id}`
+    - Request Body:
+      ```json
+      {
+        "name": "Updated Product",
+        "price": 150,
+        "category": {
+          "id": 1
+        }
+      }
+      ```
+
+- **Eliminar Producto**
+    - `DELETE /intcomex-api/product/{id}`
+
+- **Listar Productos**
+    - `GET /intcomex-api/product?page=0&size=10`
+
+- **Buscar Producto por ID**
+    - `GET /intcomex-api/product/{id}`
+
+## Estructura del Proyecto
+
+El proyecto sigue una arquitectura hexagonal para Spring Boot:
+
+- **adapter:** Contiene las implementaciones de los puertos.
+- **application:** Contiene los casos de uso y los puertos. 
+- **domain:** Define los modelos de dominio.
+- **config:** Contiene configuraciones y manejadores de excepciones.
+
+----- ./src/main/java/com/intcomex/intcomex_api/config/db/PostgresConfig.java -----
+package com.intcomex.intcomex_api.config.db;
+
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.jdbc.datasource.DriverManagerDataSource;
+
+import javax.sql.DataSource;
+
+
+@Configuration
+@EnableConfigurationProperties(DataSourcePostgresConfig.class)
+public class PostgresConfig {
+
+    private final DataSourcePostgresConfig dataSourcePostgresConfig;
+
+    public PostgresConfig(DataSourcePostgresConfig dataSourcePostgresConfig) {
+        this.dataSourcePostgresConfig = dataSourcePostgresConfig;
+    }
+    @Bean
+    public DataSource dataSource() {
+        DriverManagerDataSource dataSource = new DriverManagerDataSource();
+        dataSource.setDriverClassName(dataSourcePostgresConfig.getDriverClassName());
+        dataSource.setUrl(dataSourcePostgresConfig.getUrl());
+        dataSource.setUsername(dataSourcePostgresConfig.getUsername());
+        dataSource.setPassword(dataSourcePostgresConfig.getPassword());
+        return dataSource;
+    }
+}
+
+----- ./src/main/java/com/intcomex/intcomex_api/config/db/DataSourcePostgresConfig.java -----
+package com.intcomex.intcomex_api.config.db;
+
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import org.springframework.boot.context.properties.ConfigurationProperties;
+
+@Data
+@NoArgsConstructor
+@ConfigurationProperties(prefix = "spring.datasource")
+public class DataSourcePostgresConfig {
+
+    private String url;
+    private String driverClassName;
+    private String username;
+    private String password;
+}
+
+----- ./src/main/java/com/intcomex/intcomex_api/config/ddd/UsesCasesConfig.java -----
+package com.intcomex.intcomex_api.config.ddd;
+
+import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.FilterType;
+
+@Configuration
+@ComponentScan(
+        basePackages = "com.intcomex.intcomex_api.application.usecase",
+        includeFilters = {@ComponentScan.Filter(type = FilterType.REGEX, pattern = "com\\.intcomex\\.intcomex_api\\.application\\.usecase\\..*UseCase$")},
+        useDefaultFilters = false
+)
+public class UsesCasesConfig {
+
+}
+
+----- ./src/main/java/com/intcomex/intcomex_api/config/swagger/SpringDocConfig.java -----
+package com.intcomex.intcomex_api.config.swagger;
+
+import io.swagger.v3.oas.models.OpenAPI;
+import io.swagger.v3.oas.models.info.Info;
+import org.springdoc.core.models.GroupedOpenApi;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+
+@Configuration
+public class SpringDocConfig {
+
+    @Bean
+    public OpenAPI customOpenAPI() {
+        return new OpenAPI()
+                .info(new Info()
+                        .title("Intcomex API")
+                        .version("v1")
+                        .description("API for managing Intcomex"));
+    }
+
+    @Bean
+    public GroupedOpenApi publicApi() {
+        return GroupedOpenApi.builder()
+                .group("intcomex-api")
+                .packagesToScan("com.intcomex.intcomex_api.adapter.controller")
+                .build();
+    }
+}
+
+----- ./src/main/java/com/intcomex/intcomex_api/config/exception/LoadAppException.java -----
+package com.intcomex.intcomex_api.config.exception;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+public class LoadAppException extends GenericException {
+
+    private static final Logger logger = LoggerFactory.getLogger(LoadAppException.class);
+
+    public LoadAppException(int errorCode, String message) {
+        super(errorCode, message);
+        logger.error("Exception LoadAppException: code:{}, message:{}", errorCode, message);
+    }
+
+    public LoadAppException(int errorCode, String message, Throwable cause) {
+        super(errorCode, message, cause);
+        logger.error("Exception LoadAppException: code:{}, message:{}", errorCode, message);
+    }
+}
+
+----- ./src/main/java/com/intcomex/intcomex_api/config/exception/EntityNotFoundException.java -----
+package com.intcomex.intcomex_api.config.exception;
+
+public class EntityNotFoundException extends GenericException {
+    public EntityNotFoundException(int errorCode, String errorMessage) {
+        super(errorCode, errorMessage);
+    }
+}
+
+----- ./src/main/java/com/intcomex/intcomex_api/config/exception/SPError.java -----
+package com.intcomex.intcomex_api.config.exception;
+
+public enum SPError {
+    GENERIC_ERROR(1000, "General, uncontrolled errors"),
+    APP_LOAD_ERROR(1001, "Errors during application loading"),
+    DATABASE_CONNECTION_ERROR(1002, "Database connection failures"),
+    INVALID_ARGUMENT_ERROR(1003, "Invalid argument provided to a method or function"),
+    INVALID_REQUEST_ERROR(1004, "Malformed request such as unreadable or missing message body"),
+    INVALID_PARAMS_ERROR(1005, "Malformed request with invalid data submitted"),
+    DATABASE_ADAPTER_SAVE_ERROR(1007, "Errors saving records to the database"),
+    DATABASE_ADAPTER_FIND_ERROR(1008, "Errors retrieving records from the database"),
+    DATABASE_ADAPTER_UPDATE_ERROR(1009, "Errors updating records in the database"),
+    DATABASE_ADAPTER_DELETE_ERROR(1010, "Errors deleting records from the database"),
+    CONTROLLER_ERROR_CREATED(1011, "Controller error when creating"),
+    CONTROLLER_ERROR_FIND_ALL(1012, "Controller error when finding all"),
+    CONTROLLER_ERROR_FIND_BY_ID(1013, "Controller error when finding by ID"),
+    CONTROLLER_ERROR_UPDATE(1014, "Controller error when updating"),
+    CONTROLLER_ERROR_DELETE(1015, "Controller error when deleting");
+
+    private final int errorCode;
+    private final String errorMessage;
+
+    SPError(int errorCode, String errorMessage) {
+        this.errorCode = errorCode;
+        this.errorMessage = errorMessage;
+    }
+
+    public int getErrorCode() {
+        return errorCode;
+    }
+
+    public String getErrorMessage() {
+        return errorMessage;
+    }
+}
+
+----- ./src/main/java/com/intcomex/intcomex_api/config/exception/GlobalExceptionHandler.java -----
+package com.intcomex.intcomex_api.config.exception;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.annotation.ControllerAdvice;
+import org.springframework.web.bind.annotation.ExceptionHandler;
+
+import java.util.List;
+import java.util.stream.Collectors;
+
+@ControllerAdvice
+public class GlobalExceptionHandler {
+
+    private static final Logger logger = LoggerFactory.getLogger(GlobalExceptionHandler.class);
+
+    @ExceptionHandler(GenericException.class)
+    public ResponseEntity<ErrorResponse> handleCustomException(GenericException ex) {
+        ErrorResponse error = new ErrorResponse(false, SPError.GENERIC_ERROR.getErrorCode(), SPError.GENERIC_ERROR.getErrorMessage(), ex.getMessage());
+        logError(error, ex);
+        return ResponseEntity.badRequest().body(error);
+    }
+
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<ErrorResponse> handleIllegalArgumentException(IllegalArgumentException ex) {
+        ErrorResponse error = new ErrorResponse(false, SPError.INVALID_ARGUMENT_ERROR.getErrorCode(), SPError.INVALID_ARGUMENT_ERROR.getErrorMessage(), null);
+        logError(error, ex);
+        return ResponseEntity.badRequest().body(error);
+    }
+
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<ErrorResponse> handleMethodArgumentNotValid(MethodArgumentNotValidException ex) {
+        List<String> errors = ex.getBindingResult()
+                .getFieldErrors()
+                .stream()
+                .map(error -> "Field: " + error.getField() + " -> Error:" + error.getDefaultMessage())
+                .collect(Collectors.toList());
+        ErrorResponse error = new ErrorResponse(false, SPError.INVALID_PARAMS_ERROR.getErrorCode(), SPError.INVALID_PARAMS_ERROR.getErrorMessage(), errors);
+        logError(error, ex);
+        return ResponseEntity.badRequest().body(error);
+    }
+
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<ErrorResponse> handleHttpMessageNotReadable(HttpMessageNotReadableException ex) {
+        ErrorResponse error = new ErrorResponse(false, SPError.INVALID_REQUEST_ERROR.getErrorCode(), SPError.INVALID_REQUEST_ERROR.getErrorMessage(), null);
+        logError(error, ex);
+        return ResponseEntity.badRequest().body(error);
+    }
+
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<ErrorResponse> handleException(Exception ex) {
+        ErrorResponse error = new ErrorResponse(false, SPError.GENERIC_ERROR.getErrorCode(), SPError.GENERIC_ERROR.getErrorMessage(), "An unexpected error occurred");
+        logError(error, ex);
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
+    }
+
+    private void logError(ErrorResponse error, Exception ex) {
+        logger.error("Error:{} -> Exception: {}", error, ex);
+    }
+}
+
+----- ./src/main/java/com/intcomex/intcomex_api/config/exception/InvalidRequestException.java -----
+package com.intcomex.intcomex_api.config.exception;
+
+public class InvalidRequestException extends GenericException {
+    public InvalidRequestException(int errorCode, String errorMessage) {
+        super(errorCode, errorMessage);
+    }
+}
+
+----- ./src/main/java/com/intcomex/intcomex_api/config/exception/CustomException.java -----
+package com.intcomex.intcomex_api.config.exception;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+public class CustomException  extends GenericException {
+    private static final Logger logger = LoggerFactory.getLogger(CustomException.class);
+
+    public CustomException(int errorCode, String message, Throwable cause) {
+        super(errorCode, message, cause);
+        logger.error("Exception CustomException: code:{}, message:{}, cause:{}", errorCode, message, cause.getCause());
+    }
+
+    public CustomException(int errorCode, String message) {
+        super(errorCode, message);
+        logger.error("Exception CustomException: code:{}, message:{}", errorCode, message);
+    }
+}
+
+----- ./src/main/java/com/intcomex/intcomex_api/config/exception/DataBaseException.java -----
+package com.intcomex.intcomex_api.config.exception;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+
+public class DataBaseException extends GenericException {
+
+    private static final Logger logger = LoggerFactory.getLogger(DataBaseException.class);
+
+    public DataBaseException(int errorCode, String message, Throwable cause) {
+        super(errorCode, message, cause);
+        logger.error("Exception DataBaseException: code:{}, message:{}, cause:{}", errorCode, message, cause.getCause());
+    }
+
+    public DataBaseException(int errorCode, String message) {
+        super(errorCode, message);
+        logger.error("Exception DataBaseException: code:{}, message:{}", errorCode, message);
+    }
+}
+
+----- ./src/main/java/com/intcomex/intcomex_api/config/exception/ErrorResponse.java -----
+package com.intcomex.intcomex_api.config.exception;
+
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.databind.PropertyNamingStrategy;
+import com.fasterxml.jackson.databind.annotation.JsonNaming;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
+
+@Getter
+@Setter
+@AllArgsConstructor
+@NoArgsConstructor
+@JsonNaming(PropertyNamingStrategy.SnakeCaseStrategy.class)
+@JsonIgnoreProperties(ignoreUnknown = true)
+public class ErrorResponse {
+
+    private boolean status;
+    private int codeStatus;
+    private String message;
+    private Object data;
+}
+
+----- ./src/main/java/com/intcomex/intcomex_api/config/exception/GenericException.java -----
+package com.intcomex.intcomex_api.config.exception;
+
+public class GenericException extends RuntimeException {
+    private final int errorCode;
+    private final String errorMessage;
+
+    public GenericException(int errorCode, String errorMessage) {
+        super(errorMessage);
+        this.errorCode = errorCode;
+        this.errorMessage = errorMessage;
+    }
+
+    public GenericException(int errorCode, String errorMessage, Throwable cause) {
+        super(errorMessage, cause);
+        this.errorCode = errorCode;
+        this.errorMessage = errorMessage;
+    }
+
+    public int getErrorCode() {
+        return errorCode;
+    }
+
+    public String getErrorMessage() {
+        return errorMessage;
+    }
+}
+
+----- ./src/main/java/com/intcomex/intcomex_api/config/cors/RestConfig.java -----
+package com.intcomex.intcomex_api.config.cors;
+
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import org.springframework.web.filter.CorsFilter;
+
+import java.util.Collections;
+
+@Configuration
+public class RestConfig {
+
+    @Bean
+    public CorsFilter corsFilter() {
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        CorsConfiguration config = new CorsConfiguration();
+        config.setAllowCredentials(true); // Allow credentials to be included in the CORS requests.
+        config.setAllowedOriginPatterns(Collections.singletonList("*")); // Allow all origins.
+        config.setAllowedHeaders(Collections.singletonList("*")); // Allow all headers.
+        config.setAllowedMethods(Collections.singletonList("*")); // Allow all HTTP methods.
+        source.registerCorsConfiguration("/**", config); // Apply these settings to all paths.
+        return new CorsFilter(source);
+    }
+}
+
+----- ./src/main/java/com/intcomex/intcomex_api/adapter/postgres/models/CategoryEntity.java -----
+package com.intcomex.intcomex_api.adapter.postgres.models;
+
+import com.intcomex.intcomex_api.domain.model.CategoryDomain;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Column;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+@Entity
+@Table(name = "category")
+public class CategoryEntity {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @Column(nullable = false)
+    private String name;
+
+    @Column(nullable = false)
+    private String imageUrl;
+
+    public static CategoryEntity fromDomain(CategoryDomain domain){
+        return CategoryEntity.builder()
+                .id(domain.getId())
+                .name(domain.getName())
+                .imageUrl(domain.getImageUrl())
+                .build();
+    }
+
+    public CategoryDomain toDomain(){
+        return CategoryDomain.builder()
+                .id(this.id)
+                .name(this.name)
+                .imageUrl(this.imageUrl)
+                .build();
+    }
+}
+
+----- ./src/main/java/com/intcomex/intcomex_api/adapter/postgres/models/ProductEntity.java -----
+package com.intcomex.intcomex_api.adapter.postgres.models;
+
+import com.intcomex.intcomex_api.domain.model.ProductDomain;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Column;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.JoinColumn;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+import java.math.BigDecimal;
+
+@Entity
+@Table(name = "product")
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+public class ProductEntity {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @Column(nullable = false)
+    private String name;
+
+    @Column(nullable = false)
+    private BigDecimal price;
+
+    @ManyToOne
+    @JoinColumn(name = "category_id", nullable = false)
+    private CategoryEntity category;
+
+    public static ProductEntity fromDomain(ProductDomain domain) {
+        return ProductEntity.builder()
+                .id(domain.getId())
+                .name(domain.getName())
+                .price(domain.getPrice())
+                .category(CategoryEntity.fromDomain(domain.getCategory()))
+                .build();
+    }
+
+    public ProductDomain toDomain() {
+        return ProductDomain.builder()
+                .id(this.id)
+                .name(this.name)
+                .price(this.price)
+                .category(this.category.toDomain())
+                .build();
+    }
+}
+
+----- ./src/main/java/com/intcomex/intcomex_api/adapter/postgres/CategoryPostgresRepository.java -----
+package com.intcomex.intcomex_api.adapter.postgres;
+
+import com.intcomex.intcomex_api.adapter.postgres.models.CategoryEntity;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+
+import java.util.List;
+
+@Repository
+public interface CategoryPostgresRepository extends JpaRepository<CategoryEntity, Long> {
+
+}
+
+----- ./src/main/java/com/intcomex/intcomex_api/adapter/postgres/CategoryPostgresAdapter.java -----
+package com.intcomex.intcomex_api.adapter.postgres;
+
+import com.intcomex.intcomex_api.adapter.postgres.models.CategoryEntity;
+import com.intcomex.intcomex_api.application.port.out.CategoryStorageRepository;
+import com.intcomex.intcomex_api.config.exception.DataBaseException;
+import com.intcomex.intcomex_api.config.exception.SPError;
+import com.intcomex.intcomex_api.domain.model.CategoryDomain;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.cache.annotation.Cacheable;
+
+import java.util.List;
+import java.util.stream.Collectors;
+
+@Component
+public class CategoryPostgresAdapter implements CategoryStorageRepository {
+
+    private static final Logger logger = LoggerFactory.getLogger(CategoryPostgresAdapter.class);
+    private final CategoryPostgresRepository repository;
+
+    public CategoryPostgresAdapter(CategoryPostgresRepository repository) {
+        this.repository = repository;
+    }
+
+    @Override
+    @Transactional
+    public CategoryDomain save(CategoryDomain domain) {
+        try {
+            logger.info("Attempting to save category: {}", domain);
+            CategoryEntity entity = CategoryEntity.fromDomain(domain);
+            CategoryEntity savedEntity = repository.save(entity);
+            logger.info("Category saved successfully: {}", savedEntity.toDomain());
+            return savedEntity.toDomain();
+        } catch (Exception e) {
+            logger.error("Error saving category : {}", e.getMessage());
+            throw new DataBaseException(SPError.DATABASE_ADAPTER_SAVE_ERROR.getErrorCode(), SPError.DATABASE_ADAPTER_SAVE_ERROR.getErrorMessage(), e);
+        }
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    @Cacheable("categories")
+    public List<CategoryDomain> getAll() {
+        try {
+            logger.info("Retrieving all transactions from the database");
+            return repository.findAll().stream().map(CategoryEntity::toDomain).collect(Collectors.toList());
+        } catch (Exception e) {
+            logger.error("Error retrieving transactions: {}", e.getMessage());
+            throw new DataBaseException(SPError.DATABASE_ADAPTER_FIND_ERROR.getErrorCode(), SPError.DATABASE_ADAPTER_FIND_ERROR.getErrorMessage(), e);
+        }
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public CategoryDomain getById(Long id) {
+        try {
+            logger.info("Retrieving category by ID: {}", id);
+            return repository.findById(id)
+                    .map(CategoryEntity::toDomain)
+                    .orElseThrow(() -> new DataBaseException(SPError.DATABASE_ADAPTER_FIND_ERROR.getErrorCode(), "Category not found"));
+        } catch (Exception e) {
+            logger.error("Error retrieving category by ID: {}", e.getMessage());
+            throw new DataBaseException(SPError.DATABASE_ADAPTER_FIND_ERROR.getErrorCode(), SPError.DATABASE_ADAPTER_FIND_ERROR.getErrorMessage(), e);
+        }
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<CategoryDomain> getAllPaginated(int page, int size) {
+        try {
+            logger.info("Retrieving transactions paginated");
+            Pageable pageable = PageRequest.of(page, size);
+            return repository.findAll(pageable)
+                    .map(CategoryEntity::toDomain);
+        } catch (Exception e) {
+            logger.error("Error retrieving transactions paginated: {}", e.getMessage());
+            throw new DataBaseException(SPError.DATABASE_ADAPTER_FIND_ERROR.getErrorCode(), SPError.DATABASE_ADAPTER_FIND_ERROR.getErrorMessage(), e);
+        }
+    }
+
+    @Override
+    @Transactional
+    public CategoryDomain update(CategoryDomain domain) {
+        try {
+            logger.info("Attempting to update category : {}", domain);
+            if (!repository.existsById(domain.getId())) {
+                throw new DataBaseException(SPError.DATABASE_ADAPTER_UPDATE_ERROR.getErrorCode(), "Category not found");
+            }
+            CategoryEntity entity = CategoryEntity.fromDomain(domain);
+            CategoryEntity updatedEntity = repository.save(entity);
+            logger.info("Category updated successfully: {}", updatedEntity.toDomain());
+            return updatedEntity.toDomain();
+        } catch (Exception e) {
+            logger.error("Error updating category : {}", e.getMessage());
+            throw new DataBaseException(SPError.DATABASE_ADAPTER_UPDATE_ERROR.getErrorCode(), SPError.DATABASE_ADAPTER_UPDATE_ERROR.getErrorMessage(), e);
+        }
+    }
+
+    @Override
+    @Transactional
+    public void delete(Long id) {
+        try {
+            logger.info("Attempting to delete category by ID: {}", id);
+            repository.deleteById(id);
+            logger.info("Category deleted successfully");
+        } catch (Exception e) {
+            logger.error("Error deleting category : {}", e.getMessage());
+            throw new DataBaseException(SPError.DATABASE_ADAPTER_DELETE_ERROR.getErrorCode(), SPError.DATABASE_ADAPTER_DELETE_ERROR.getErrorMessage(), e);
+        }
+    }
+}
+
+----- ./src/main/java/com/intcomex/intcomex_api/adapter/postgres/ProductPostgresRepository.java -----
+package com.intcomex.intcomex_api.adapter.postgres;
+
+import com.intcomex.intcomex_api.adapter.postgres.models.ProductEntity;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+
+@Repository
+public interface ProductPostgresRepository extends JpaRepository<ProductEntity, Long> {
+
+}
+
+----- ./src/main/java/com/intcomex/intcomex_api/adapter/postgres/ProductPostgresAdapter.java -----
+package com.intcomex.intcomex_api.adapter.postgres;
+
+import com.intcomex.intcomex_api.adapter.postgres.models.ProductEntity;
+import com.intcomex.intcomex_api.application.port.out.ProductStorageRepository;
+import com.intcomex.intcomex_api.config.exception.DataBaseException;
+import com.intcomex.intcomex_api.config.exception.SPError;
+import com.intcomex.intcomex_api.domain.model.ProductDomain;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+import java.util.stream.Collectors;
+
+@Component
+public class ProductPostgresAdapter implements ProductStorageRepository {
+
+    private static final Logger logger = LoggerFactory.getLogger(ProductPostgresAdapter.class);
+    private final ProductPostgresRepository repository;
+
+    public ProductPostgresAdapter(ProductPostgresRepository repository) {
+        this.repository = repository;
+    }
+
+    @Override
+    @Transactional
+    public ProductDomain save(ProductDomain domain) {
+        try {
+            logger.info("Attempting to save product: {}", domain);
+            ProductEntity entity = ProductEntity.fromDomain(domain);
+            ProductEntity savedEntity = repository.save(entity);
+            logger.info("Product saved successfully: {}", savedEntity.toDomain());
+            return savedEntity.toDomain();
+        } catch (Exception e) {
+            logger.error("Error saving product: {}", e.getMessage());
+            throw new DataBaseException(SPError.DATABASE_ADAPTER_SAVE_ERROR.getErrorCode(), SPError.DATABASE_ADAPTER_SAVE_ERROR.getErrorMessage(), e);
+        }
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<ProductDomain> getAll() {
+        try {
+            logger.info("Retrieving all products from the database");
+            return repository.findAll().stream()
+                    .map(ProductEntity::toDomain)
+                    .collect(Collectors.toList());
+        } catch (Exception e) {
+            logger.error("Error retrieving products: {}", e.getMessage());
+            throw new DataBaseException(SPError.DATABASE_ADAPTER_FIND_ERROR.getErrorCode(), SPError.DATABASE_ADAPTER_FIND_ERROR.getErrorMessage(), e);
+        }
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public ProductDomain getById(Long id) {
+        try {
+            logger.info("Retrieving product by ID: {}", id);
+            return repository.findById(id)
+                    .map(ProductEntity::toDomain)
+                    .orElseThrow(() -> new DataBaseException(SPError.DATABASE_ADAPTER_FIND_ERROR.getErrorCode(), "Product not found"));
+        } catch (Exception e) {
+            logger.error("Error retrieving product by ID: {}", e.getMessage());
+            throw new DataBaseException(SPError.DATABASE_ADAPTER_FIND_ERROR.getErrorCode(), SPError.DATABASE_ADAPTER_FIND_ERROR.getErrorMessage(), e);
+        }
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<ProductDomain> getAllPaginated(int page, int size) {
+        try {
+            logger.info("Retrieving products paginated");
+            Pageable pageable = PageRequest.of(page, size);
+            return repository.findAll(pageable)
+                    .map(ProductEntity::toDomain);
+        } catch (Exception e) {
+            logger.error("Error retrieving products paginated: {}", e.getMessage());
+            throw new DataBaseException(SPError.DATABASE_ADAPTER_FIND_ERROR.getErrorCode(), SPError.DATABASE_ADAPTER_FIND_ERROR.getErrorMessage(), e);
+        }
+    }
+
+    @Override
+    @Transactional
+    public ProductDomain update(ProductDomain domain) {
+        try {
+            logger.info("Attempting to update product: {}", domain);
+            if (!repository.existsById(domain.getId())) {
+                throw new DataBaseException(SPError.DATABASE_ADAPTER_UPDATE_ERROR.getErrorCode(), "Product not found");
+            }
+            ProductEntity entity = ProductEntity.fromDomain(domain);
+            ProductEntity updatedEntity = repository.save(entity);
+            logger.info("Product updated successfully: {}", updatedEntity.toDomain());
+            return updatedEntity.toDomain();
+        } catch (Exception e) {
+            logger.error("Error updating product: {}", e.getMessage());
+            throw new DataBaseException(SPError.DATABASE_ADAPTER_UPDATE_ERROR.getErrorCode(), SPError.DATABASE_ADAPTER_UPDATE_ERROR.getErrorMessage(), e);
+        }
+    }
+
+    @Override
+    @Transactional
+    public void delete(Long id) {
+        try {
+            logger.info("Attempting to delete product by ID: {}", id);
+            repository.deleteById(id);
+            logger.info("Product deleted successfully");
+        } catch (Exception e) {
+            logger.error("Error deleting product: {}", e.getMessage());
+            throw new DataBaseException(SPError.DATABASE_ADAPTER_DELETE_ERROR.getErrorCode(), SPError.DATABASE_ADAPTER_DELETE_ERROR.getErrorMessage(), e);
+        }
+    }
+}
+
+----- ./src/main/java/com/intcomex/intcomex_api/adapter/controller/models/ProductResponse.java -----
+package com.intcomex.intcomex_api.adapter.controller.models;
+
+import com.intcomex.intcomex_api.config.exception.SPError;
+import org.springframework.http.HttpStatus;
+import org.springframework.validation.BindingResult;
+
+import java.util.List;
+import java.util.stream.Collectors;
+
+public class ProductResponse extends GenericResponse {
+
+    public static ProductResponse of(Object result, HttpStatus httpStatus) {
+        ProductResponse response = new ProductResponse();
+        response.setStatus(true);
+        response.setCodeStatus(httpStatus.value());
+        response.setMessage(httpStatus.getReasonPhrase());
+        response.setData(result);
+        return response;
+    }
+
+    public static ProductResponse badRequest(BindingResult bindingResult) {
+        List<String> errors = bindingResult.getFieldErrors()
+                .stream()
+                .map(error -> String.format("Field: %s -> Error: %s", error.getField(), error.getDefaultMessage()))
+                .collect(Collectors.toList());
+
+        ProductResponse response = new ProductResponse();
+        response.setStatus(false);
+        response.setCodeStatus(HttpStatus.BAD_REQUEST.value());
+        response.setMessage(SPError.INVALID_PARAMS_ERROR.getErrorMessage());
+        response.setData(errors);
+
+        return response;
+    }
+}
+
+----- ./src/main/java/com/intcomex/intcomex_api/adapter/controller/models/GenericResponse.java -----
+package com.intcomex.intcomex_api.adapter.controller.models;
+
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.databind.PropertyNamingStrategy;
+import com.fasterxml.jackson.databind.annotation.JsonNaming;
+import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
+@JsonNaming(PropertyNamingStrategy.SnakeCaseStrategy.class)
+@JsonIgnoreProperties(ignoreUnknown = true)
+public class GenericResponse {
+
+    @Schema(description = "Indicates the success or failure of the operation.")
+    private boolean status;
+
+    @Schema(description = "The HTTP status code of the response.")
+    private int codeStatus;
+
+    @Schema(description = "A message providing more details about the response.")
+    private String message;
+
+    @Schema(description = "The data payload of the response, which can be any type of object.")
+    private Object data;
+}
+
+----- ./src/main/java/com/intcomex/intcomex_api/adapter/controller/models/CategoryResponse.java -----
+package com.intcomex.intcomex_api.adapter.controller.models;
+
+import com.intcomex.intcomex_api.config.exception.SPError;
+import io.swagger.v3.oas.annotations.media.Schema;
+import org.springframework.http.HttpStatus;
+import org.springframework.validation.BindingResult;
+
+import java.util.List;
+import java.util.stream.Collectors;
+
+public class CategoryResponse extends GenericResponse {
+
+    public static CategoryResponse of(Object result, HttpStatus httpStatus) {
+        CategoryResponse response = new CategoryResponse();
+        response.setStatus(true);
+        response.setCodeStatus(httpStatus.value());
+        response.setMessage(httpStatus.getReasonPhrase());
+        response.setData(result);
+        return response;
+    }
+
+    public static CategoryResponse badRequest(BindingResult bindingResult) {
+        List<String> errors = bindingResult.getFieldErrors()
+                .stream()
+                .map(error -> String.format("Field: %s -> Error: %s", error.getField(), error.getDefaultMessage()))
+                .collect(Collectors.toList());
+
+        CategoryResponse response = new CategoryResponse();
+        response.setStatus(false);
+        response.setCodeStatus(HttpStatus.BAD_REQUEST.value());
+        response.setMessage(SPError.INVALID_PARAMS_ERROR.getErrorMessage());
+        response.setData(errors);
+
+        return response;
+    }
+}
+
+----- ./src/main/java/com/intcomex/intcomex_api/adapter/controller/models/CategoryRequest.java -----
+package com.intcomex.intcomex_api.adapter.controller.models;
+
+import com.intcomex.intcomex_api.domain.model.CategoryDomain;
+import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.NotBlank;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import lombok.NonNull;
+
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+public class CategoryRequest {
+
+    @Schema(description = "The unique identifier of the category", example = "1")
+    private Long id;
+
+    @NonNull
+    @NotBlank(message = "Name is mandatory")
+    @Schema(description = "The name of the category", example = "SERVIDORES", required = true)
+    private String name;
+
+    @NonNull
+    @NotBlank(message = "Image URL is mandatory")
+    @Schema(description = "The image URL of the category", example = "http://intcomex.s3.aws.com/servidores.png", required = true)
+    private String imageUrl;
+
+    public CategoryDomain toDomain() {
+        return CategoryDomain.builder()
+                .id(this.id)
+                .name(this.name)
+                .imageUrl(this.imageUrl)
+                .build();
+    }
+}
+
+----- ./src/main/java/com/intcomex/intcomex_api/adapter/controller/models/ProductRequest.java -----
+package com.intcomex.intcomex_api.adapter.controller.models;
+
+import com.intcomex.intcomex_api.domain.model.ProductDomain;
+import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import lombok.NonNull;
+
+import java.math.BigDecimal;
+
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+public class ProductRequest {
+
+    private Long id;
+
+    @NonNull
+    @NotBlank(message = "Name is mandatory")
+    @Schema(description = "The name of the product", example = "Laptop", required = true)
+    private String name;
+
+    @NonNull
+    @NotNull(message = "Price is mandatory")
+    @Schema(description = "The price of the product", example = "999.99", required = true)
+    private BigDecimal price;
+
+    @NonNull
+    @NotNull(message = "Category ID is mandatory")
+    @Schema(description = "The ID of the category the product belongs to", example = "1", required = true)
+    private CategoryRequest category;
+
+    public ProductDomain toDomain() {
+        return ProductDomain.builder()
+                .id(this.id)
+                .name(this.name)
+                .price(this.price)
+                .category(this.category.toDomain())
+                .build();
+    }
+}
+
+----- ./src/main/java/com/intcomex/intcomex_api/adapter/controller/ProductController.java -----
+package com.intcomex.intcomex_api.adapter.controller;
+
+import com.intcomex.intcomex_api.adapter.controller.models.ProductRequest;
+import com.intcomex.intcomex_api.adapter.controller.models.ProductResponse;
+import com.intcomex.intcomex_api.application.port.in.category.GetCategoryByIdPort;
+import com.intcomex.intcomex_api.application.port.in.product.*;
+import com.intcomex.intcomex_api.config.exception.CustomException;
+import com.intcomex.intcomex_api.config.exception.ErrorResponse;
+import com.intcomex.intcomex_api.config.exception.SPError;
+import com.intcomex.intcomex_api.domain.model.ProductDomain;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import jakarta.validation.Valid;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.validation.BindingResult;
+import org.springframework.web.bind.annotation.*;
+
+@RestController
+@RequestMapping("/product")
+@CrossOrigin(origins = "*", allowedHeaders = "*")
+public class ProductController {
+
+    private static final Logger logger = LoggerFactory.getLogger(ProductController.class);
+    private final CreateProductPort createProductPort;
+    private final DeleteProductPort deleteProductPort;
+    private final GetAllProductsPort getAllProductsPort;
+    private final GetProductByIdPort getProductByIdPort;
+    private final UpdateProductPort updateProductPort;
+    private final GetCategoryByIdPort getCategoryByIdPort;
+
+    @Autowired
+    public ProductController(
+            CreateProductPort createProductPort,
+            DeleteProductPort deleteProductPort,
+            GetAllProductsPort getAllProductsPort,
+            GetProductByIdPort getProductByIdPort,
+            UpdateProductPort updateProductPort,
+            GetCategoryByIdPort getCategoryByIdPort) {
+        this.createProductPort = createProductPort;
+        this.deleteProductPort = deleteProductPort;
+        this.getAllProductsPort = getAllProductsPort;
+        this.getProductByIdPort = getProductByIdPort;
+        this.updateProductPort = updateProductPort;
+        this.getCategoryByIdPort = getCategoryByIdPort;
+    }
+
+    @Operation(summary = "Create a new product")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "201", description = "Product created successfully", content = @Content(schema = @Schema(implementation = ProductResponse.class))),
+            @ApiResponse(responseCode = "400", description = "Invalid input", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
+    @PostMapping
+    public ResponseEntity<Object> createProduct(@Valid @RequestBody ProductRequest request, BindingResult bindingResult) {
+        try {
+            logger.info("Received request to create product: {}", request);
+
+            if (bindingResult.hasErrors()) {
+                logger.error("Validation errors: {}", bindingResult.getFieldErrors());
+                return ResponseEntity.badRequest().body(ProductResponse.badRequest(bindingResult));
+            }
+
+            ProductDomain productDomain = request.toDomain();
+            ProductDomain createdProduct = createProductPort.create(productDomain);
+
+            return ResponseEntity.status(HttpStatus.CREATED).body(ProductResponse.of(createdProduct, HttpStatus.CREATED));
+        } catch (CustomException ex) {
+            ErrorResponse errorResponse = new ErrorResponse(false, ex.getErrorCode(), ex.getErrorMessage(), null);
+            logger.error("Post create product error: {}", errorResponse, ex);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
+        } catch (Exception ex) {
+            ErrorResponse errorResponse = new ErrorResponse(false, SPError.CONTROLLER_ERROR_CREATED.getErrorCode(), SPError.CONTROLLER_ERROR_CREATED.getErrorMessage(), ex.getCause());
+            logger.error("Post create product error: {}", errorResponse, ex);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
+        }
+    }
+
+    @Operation(summary = "Get all products with pagination")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Found all products", content = @Content(schema = @Schema(implementation = ProductResponse.class))),
+            @ApiResponse(responseCode = "500", description = "Internal server error", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
+    @GetMapping
+    public ResponseEntity<Object> getAllProducts(@RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "10") int size) {
+        try {
+            logger.info("Received request to get all products with pagination: page={}, size={}", page, size);
+            Page<ProductDomain> products = getAllProductsPort.getAllPaginated(page, size);
+            return ResponseEntity.ok(ProductResponse.of(products.getContent(), HttpStatus.OK));
+        } catch (Exception ex) {
+            ErrorResponse errorResponse = new ErrorResponse(false, SPError.CONTROLLER_ERROR_FIND_ALL.getErrorCode(), SPError.CONTROLLER_ERROR_FIND_ALL.getErrorMessage(), ex.getCause());
+            logger.error("Get all products error: {}", errorResponse, ex);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
+        }
+    }
+
+    @Operation(summary = "Get product by ID")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Found the product", content = @Content(schema = @Schema(implementation = ProductResponse.class))),
+            @ApiResponse(responseCode = "404", description = "Product not found", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
+    @GetMapping("/{id}")
+    public ResponseEntity<Object> getProductById(@PathVariable Long id) {
+        try {
+            logger.info("Received request to get product by ID: {}", id);
+            ProductDomain product = getProductByIdPort.getById(id);
+            return ResponseEntity.ok(ProductResponse.of(product, HttpStatus.OK));
+        } catch (CustomException ex) {
+            ErrorResponse errorResponse = new ErrorResponse(false, ex.getErrorCode(), ex.getErrorMessage(), null);
+            logger.error("Get product by ID error: {}", errorResponse, ex);
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorResponse);
+        } catch (Exception ex) {
+            ErrorResponse errorResponse = new ErrorResponse(false, SPError.CONTROLLER_ERROR_FIND_BY_ID.getErrorCode(), SPError.CONTROLLER_ERROR_FIND_BY_ID.getErrorMessage(), ex.getCause());
+            logger.error("Get product by ID error: {}", errorResponse, ex);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
+        }
+    }
+
+    @Operation(summary = "Update product by ID")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Product updated successfully", content = @Content(schema = @Schema(implementation = ProductResponse.class))),
+            @ApiResponse(responseCode = "400", description = "Invalid input", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "404", description = "Product not found", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
+    @PutMapping("/{id}")
+    public ResponseEntity<Object> updateProduct(@PathVariable Long id, @Valid @RequestBody ProductRequest request, BindingResult bindingResult) {
+        try {
+            logger.info("Received request to update product with ID: {}", id);
+
+            if (bindingResult.hasErrors()) {
+                logger.error("Validation errors: {}", bindingResult.getFieldErrors());
+                return ResponseEntity.badRequest().body(ProductResponse.badRequest(bindingResult));
+            }
+
+            ProductDomain productDomain = request.toDomain();
+            productDomain.setId(id);
+            ProductDomain updatedProduct = updateProductPort.update(productDomain);
+            return ResponseEntity.ok(ProductResponse.of(updatedProduct, HttpStatus.OK));
+        } catch (CustomException ex) {
+            ErrorResponse errorResponse = new ErrorResponse(false, ex.getErrorCode(), ex.getErrorMessage(), null);
+            logger.error("Update product error: {}", errorResponse, ex);
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorResponse);
+        } catch (Exception ex) {
+            ErrorResponse errorResponse = new ErrorResponse(false, SPError.CONTROLLER_ERROR_UPDATE.getErrorCode(), SPError.CONTROLLER_ERROR_UPDATE.getErrorMessage(), ex.getCause());
+            logger.error("Update product error: {}", errorResponse, ex);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
+        }
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Object> deleteProduct(@PathVariable Long id) {
+        try {
+            logger.info("Received request to delete product with ID: {}", id);
+
+            deleteProductPort.delete(id);
+            return ResponseEntity.noContent().build();
+        } catch (CustomException ex) {
+            ErrorResponse errorResponse = new ErrorResponse(false, ex.getErrorCode(), ex.getErrorMessage(), null);
+            logger.error("Delete product error: {}", errorResponse, ex);
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorResponse);
+        } catch (Exception ex) {
+            ErrorResponse errorResponse = new ErrorResponse(false, SPError.CONTROLLER_ERROR_DELETE.getErrorCode(), SPError.CONTROLLER_ERROR_DELETE.getErrorMessage(), ex.getCause());
+            logger.error("Delete product error: {}", errorResponse, ex);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
+        }
+    }
+}
+
+----- ./src/main/java/com/intcomex/intcomex_api/adapter/controller/CategoryController.java -----
+package com.intcomex.intcomex_api.adapter.controller;
+
+import com.intcomex.intcomex_api.adapter.controller.models.CategoryRequest;
+import com.intcomex.intcomex_api.adapter.controller.models.CategoryResponse;
+import com.intcomex.intcomex_api.application.port.in.category.*;
+import com.intcomex.intcomex_api.config.exception.CustomException;
+import com.intcomex.intcomex_api.config.exception.ErrorResponse;
+import com.intcomex.intcomex_api.config.exception.SPError;
+import com.intcomex.intcomex_api.domain.model.CategoryDomain;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import jakarta.validation.Valid;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.validation.BindingResult;
+import org.springframework.web.bind.annotation.*;
+
+@RestController
+@RequestMapping("/category")
+@CrossOrigin(origins = "*", allowedHeaders = "*")
+public class CategoryController {
+
+    private static final Logger logger = LoggerFactory.getLogger(CategoryController.class);
+    private final CreateCategoryPort createCategoryPort;
+    private final DeleteCategoryPort deleteCategoryPort;
+    private final GetAllCategoryPort getAllCategoryPort;
+    private final GetCategoryByIdPort getCategoryByIdPort;
+    private final UpdateCategoryPort updateCategoryPort;
+
+    @Autowired
+    public CategoryController(
+            CreateCategoryPort createCategoryPort,
+            DeleteCategoryPort deleteCategoryPort,
+            GetAllCategoryPort getAllCategoryPort,
+            GetCategoryByIdPort getCategoryByIdPort,
+            UpdateCategoryPort updateCategoryPort) {
+        this.createCategoryPort = createCategoryPort;
+        this.deleteCategoryPort = deleteCategoryPort;
+        this.getAllCategoryPort = getAllCategoryPort;
+        this.getCategoryByIdPort = getCategoryByIdPort;
+        this.updateCategoryPort = updateCategoryPort;
+    }
+
+    @Operation(summary = "Create a new category")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "201", description = "Category created successfully"),
+            @ApiResponse(responseCode = "400", description = "Invalid input")
+    })
+    @PostMapping
+    public ResponseEntity<Object> createCategory(@Valid @RequestBody CategoryRequest request, BindingResult bindingResult) {
+        try {
+            logger.info("Received request to create category: {}", request);
+
+            if (bindingResult.hasErrors()) {
+                logger.error("Validation errors: {}", bindingResult.getFieldErrors());
+                return ResponseEntity.badRequest().body(CategoryResponse.badRequest(bindingResult));
+            }
+
+            CategoryDomain categoryDomain = request.toDomain();
+            CategoryDomain createdCategory = createCategoryPort.create(categoryDomain);
+
+            return ResponseEntity.status(HttpStatus.CREATED).body(CategoryResponse.of(createdCategory, HttpStatus.CREATED));
+        } catch (Exception ex) {
+            ErrorResponse errorResponse = new ErrorResponse(false, SPError.CONTROLLER_ERROR_CREATED.getErrorCode(), SPError.CONTROLLER_ERROR_CREATED.getErrorMessage(), ex.getCause());
+            logger.error("Post create category error: {}", errorResponse, ex);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
+        }
+    }
+
+    @Operation(summary = "Get all categories with pagination")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Found all categories"),
+            @ApiResponse(responseCode = "500", description = "Internal server error")
+    })
+    @GetMapping
+    public ResponseEntity<Object> getAllCategories(@RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "10") int size) {
+        try {
+            logger.info("Received request to get all categories with pagination: page={}, size={}", page, size);
+            Page<CategoryDomain> categories = getAllCategoryPort.getAllPaginated(page, size);
+            return ResponseEntity.ok(CategoryResponse.of(categories.getContent(), HttpStatus.OK));
+        } catch (Exception ex) {
+            ErrorResponse errorResponse = new ErrorResponse(false, SPError.CONTROLLER_ERROR_FIND_ALL.getErrorCode(), SPError.CONTROLLER_ERROR_FIND_ALL.getErrorMessage(), ex.getCause());
+            logger.error("Get all categories error: {}", errorResponse, ex);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
+        }
+    }
+
+    @Operation(summary = "Get category by ID")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Found the category"),
+            @ApiResponse(responseCode = "404", description = "Category not found")
+    })
+    @GetMapping("/{id}")
+    public ResponseEntity<Object> getCategoryById(@PathVariable Long id) {
+        try {
+            logger.info("Received request to get category by ID: {}", id);
+            CategoryDomain category = getCategoryByIdPort.getById(id);
+            return ResponseEntity.ok(CategoryResponse.of(category, HttpStatus.OK));
+        } catch (CustomException ex) {
+            ErrorResponse errorResponse = new ErrorResponse(false, ex.getErrorCode(), ex.getErrorMessage(), null);
+            logger.error("Get category by ID error: {}", errorResponse, ex);
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorResponse);
+        } catch (Exception ex) {
+            ErrorResponse errorResponse = new ErrorResponse(false, SPError.CONTROLLER_ERROR_FIND_BY_ID.getErrorCode(), SPError.CONTROLLER_ERROR_FIND_BY_ID.getErrorMessage(), ex.getCause());
+            logger.error("Get category by ID error: {}", errorResponse, ex);
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorResponse);
+        }
+    }
+
+    @Operation(summary = "Update category by ID")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Category updated successfully"),
+            @ApiResponse(responseCode = "400", description = "Invalid input"),
+            @ApiResponse(responseCode = "404", description = "Category not found")
+    })
+    @PutMapping("/{id}")
+    public ResponseEntity<Object> updateCategory(@PathVariable Long id, @Valid @RequestBody CategoryRequest request, BindingResult bindingResult) {
+        try {
+            logger.info("Received request to update category with ID: {}", id);
+
+            if (bindingResult.hasErrors()) {
+                logger.error("Validation errors: {}", bindingResult.getFieldErrors());
+                return ResponseEntity.badRequest().body(CategoryResponse.badRequest(bindingResult));
+            }
+
+            CategoryDomain categoryDomain = request.toDomain();
+            categoryDomain.setId(id);
+            CategoryDomain updatedCategory = updateCategoryPort.update(categoryDomain);
+            return ResponseEntity.ok(CategoryResponse.of(updatedCategory, HttpStatus.OK));
+        } catch (CustomException ex) {
+            ErrorResponse errorResponse = new ErrorResponse(false, ex.getErrorCode(), ex.getErrorMessage(), null);
+            logger.error("Update category error: {}", errorResponse, ex);
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorResponse);
+        } catch (Exception ex) {
+            ErrorResponse errorResponse = new ErrorResponse(false, SPError.CONTROLLER_ERROR_UPDATE.getErrorCode(), SPError.CONTROLLER_ERROR_UPDATE.getErrorMessage(), ex.getCause());
+            logger.error("Update category error: {}", errorResponse, ex);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
+        }
+    }
+
+    @Operation(summary = "Delete category by ID")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "204", description = "Category deleted successfully"),
+            @ApiResponse(responseCode = "404", description = "Category not found")
+    })
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Object> deleteCategory(@PathVariable Long id) {
+        try {
+            logger.info("Received request to delete category with ID: {}", id);
+
+            deleteCategoryPort.delete(id);
+            return ResponseEntity.noContent().build();
+        } catch (CustomException ex) {
+            ErrorResponse errorResponse = new ErrorResponse(false, ex.getErrorCode(), ex.getErrorMessage(), null);
+            logger.error("Delete category error: {}", errorResponse, ex);
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorResponse);
+        } catch (Exception ex) {
+            ErrorResponse errorResponse = new ErrorResponse(false, SPError.CONTROLLER_ERROR_DELETE.getErrorCode(), SPError.CONTROLLER_ERROR_DELETE.getErrorMessage(), ex.getCause());
+            logger.error("Delete category error: {}", errorResponse, ex);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
+        }
+    }
+}
+
+----- ./src/main/java/com/intcomex/intcomex_api/application/usecase/product/DeleteProductUseCase.java -----
+package com.intcomex.intcomex_api.application.usecase.product;
+
+import com.intcomex.intcomex_api.application.port.in.product.DeleteProductPort;
+import com.intcomex.intcomex_api.application.port.in.product.GetProductByIdPort;
+import com.intcomex.intcomex_api.application.port.out.ProductStorageRepository;
+import com.intcomex.intcomex_api.config.exception.CustomException;
+import com.intcomex.intcomex_api.config.exception.DataBaseException;
+import com.intcomex.intcomex_api.config.exception.SPError;
+import com.intcomex.intcomex_api.domain.model.ProductDomain;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+public class DeleteProductUseCase implements DeleteProductPort {
+
+    private static final Logger logger = LoggerFactory.getLogger(DeleteProductUseCase.class);
+    private final ProductStorageRepository repository;
+    private final GetProductByIdPort getProductByIdPort;
+
+    public DeleteProductUseCase(ProductStorageRepository repository, GetProductByIdPort getProductByIdPort) {
+        this.repository = repository;
+        this.getProductByIdPort = getProductByIdPort;
+    }
+
+    @Override
+    public void delete(Long id) {
+        try {
+            logger.info("Trying to delete the product with ID: {}", id);
+
+            ProductDomain existingProduct = getProductByIdPort.getById(id);
+            if (existingProduct == null) {
+                throw new CustomException(SPError.CONTROLLER_ERROR_DELETE.getErrorCode(), "Product not found");
+            }
+
+            repository.delete(id);
+        } catch (DataBaseException d) {
+            logger.error("Error deleting product: {}", d.getMessage());
+            throw new CustomException(SPError.DATABASE_ADAPTER_DELETE_ERROR.getErrorCode(), SPError.DATABASE_ADAPTER_DELETE_ERROR.getErrorMessage(), d);
+        } catch (CustomException e) {
+            logger.error("Error validating product: {}", e.getMessage());
+            throw e;
+        }
+    }
+}
+
+----- ./src/main/java/com/intcomex/intcomex_api/application/usecase/product/GetAllProductsUseCase.java -----
+package com.intcomex.intcomex_api.application.usecase.product;
+
+import com.intcomex.intcomex_api.application.port.in.product.GetAllProductsPort;
+import com.intcomex.intcomex_api.application.port.out.ProductStorageRepository;
+import com.intcomex.intcomex_api.config.exception.CustomException;
+import com.intcomex.intcomex_api.config.exception.DataBaseException;
+import com.intcomex.intcomex_api.config.exception.SPError;
+import com.intcomex.intcomex_api.domain.model.ProductDomain;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.data.domain.Page;
+
+import java.util.List;
+
+
+public class GetAllProductsUseCase implements GetAllProductsPort {
+
+    private static final Logger logger = LoggerFactory.getLogger(GetAllProductsUseCase.class);
+    private final ProductStorageRepository repository;
+
+    public GetAllProductsUseCase(ProductStorageRepository repository) {
+        this.repository = repository;
+    }
+
+    @Override
+    public List<ProductDomain> getAll() {
+        try {
+            logger.info("Trying to retrieve all products");
+            return repository.getAll();
+        } catch (DataBaseException d) {
+            logger.error("Error retrieving products: {}", d.getMessage());
+            throw new CustomException(SPError.DATABASE_ADAPTER_FIND_ERROR.getErrorCode(), SPError.DATABASE_ADAPTER_FIND_ERROR.getErrorMessage(), d);
+        }
+    }
+
+    @Override
+    public Page<ProductDomain> getAllPaginated(int page, int size) {
+        try {
+            logger.info("Trying to retrieve all products to paginate");
+            return repository.getAllPaginated(page, size);
+        } catch (DataBaseException d) {
+            logger.error("Error retrieving products to paginate: {}", d.getMessage());
+            throw new CustomException(SPError.DATABASE_ADAPTER_FIND_ERROR.getErrorCode(), SPError.DATABASE_ADAPTER_FIND_ERROR.getErrorMessage(), d);
+        }
+    }
+}
+
+----- ./src/main/java/com/intcomex/intcomex_api/application/usecase/product/CreateProductUseCase.java -----
+package com.intcomex.intcomex_api.application.usecase.product;
+
+import com.intcomex.intcomex_api.application.port.in.product.CreateProductPort;
+import com.intcomex.intcomex_api.application.port.in.category.GetCategoryByIdPort;
+import com.intcomex.intcomex_api.application.port.out.ProductStorageRepository;
+import com.intcomex.intcomex_api.config.exception.CustomException;
+import com.intcomex.intcomex_api.config.exception.DataBaseException;
+import com.intcomex.intcomex_api.config.exception.SPError;
+import com.intcomex.intcomex_api.domain.model.CategoryDomain;
+import com.intcomex.intcomex_api.domain.model.ProductDomain;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Service;
+
+public class CreateProductUseCase implements CreateProductPort {
+
+    private static final Logger logger = LoggerFactory.getLogger(CreateProductUseCase.class);
+    private final ProductStorageRepository repository;
+    private final GetCategoryByIdPort getCategoryByIdPort;
+
+    public CreateProductUseCase(ProductStorageRepository repository, GetCategoryByIdPort getCategoryByIdPort) {
+        this.repository = repository;
+        this.getCategoryByIdPort = getCategoryByIdPort;
+    }
+
+    @Override
+    public ProductDomain create(ProductDomain domain) {
+        try {
+            logger.info("Trying to save the product: {}", domain);
+
+            // Validar si la categoría existe
+            CategoryDomain category = getCategoryByIdPort.getById(domain.getCategory().getId());
+            if (category == null) {
+                throw new CustomException(SPError.CONTROLLER_ERROR_UPDATE.getErrorCode(), "Category not found");
+            }
+
+            return repository.save(domain);
+        } catch (DataBaseException d) {
+            logger.error("Error saving product: {}", d.getMessage());
+            throw new CustomException(SPError.DATABASE_ADAPTER_SAVE_ERROR.getErrorCode(), SPError.DATABASE_ADAPTER_SAVE_ERROR.getErrorMessage(), d);
+        } catch (CustomException e) {
+            logger.error("Error validating product: {}", e.getMessage());
+            throw e;
+        }
+    }
+}
+
+----- ./src/main/java/com/intcomex/intcomex_api/application/usecase/product/UpdateProductUseCase.java -----
+package com.intcomex.intcomex_api.application.usecase.product;
+
+import com.intcomex.intcomex_api.application.port.in.product.GetProductByIdPort;
+import com.intcomex.intcomex_api.application.port.in.product.UpdateProductPort;
+import com.intcomex.intcomex_api.application.port.in.category.GetCategoryByIdPort;
+import com.intcomex.intcomex_api.application.port.out.ProductStorageRepository;
+import com.intcomex.intcomex_api.config.exception.CustomException;
+import com.intcomex.intcomex_api.config.exception.DataBaseException;
+import com.intcomex.intcomex_api.config.exception.SPError;
+import com.intcomex.intcomex_api.domain.model.CategoryDomain;
+import com.intcomex.intcomex_api.domain.model.ProductDomain;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+public class UpdateProductUseCase implements UpdateProductPort {
+
+    private static final Logger logger = LoggerFactory.getLogger(UpdateProductUseCase.class);
+    private final ProductStorageRepository repository;
+    private final GetCategoryByIdPort getCategoryByIdPort;
+    private final GetProductByIdPort getProductByIdPort;
+
+    public UpdateProductUseCase(ProductStorageRepository repository, GetCategoryByIdPort getCategoryByIdPort, GetProductByIdPort getProductByIdPort) {
+        this.repository = repository;
+        this.getCategoryByIdPort = getCategoryByIdPort;
+        this.getProductByIdPort = getProductByIdPort;
+    }
+
+    @Override
+    public ProductDomain update(ProductDomain domain) {
+        try {
+            logger.info("Trying to update the product: {}", domain);
+
+            ProductDomain existingProduct = getProductByIdPort.getById(domain.getId());
+            if (existingProduct == null) {
+                throw new CustomException(SPError.CONTROLLER_ERROR_UPDATE.getErrorCode(), "Product not found");
+            }
+
+            CategoryDomain category = getCategoryByIdPort.getById(domain.getCategory().getId());
+            if (category == null) {
+                throw new CustomException(SPError.CONTROLLER_ERROR_UPDATE.getErrorCode(), "Category not found");
+            }
+
+            return repository.update(domain);
+        } catch (DataBaseException d) {
+            logger.error("Error updating product: {}", d.getMessage());
+            throw new CustomException(SPError.DATABASE_ADAPTER_UPDATE_ERROR.getErrorCode(), SPError.DATABASE_ADAPTER_UPDATE_ERROR.getErrorMessage(), d);
+        } catch (CustomException e) {
+            logger.error("Error validating product: {}", e.getMessage());
+            throw e;
+        }
+    }
+}
+
+----- ./src/main/java/com/intcomex/intcomex_api/application/usecase/product/GetProductByIdUseCase.java -----
+package com.intcomex.intcomex_api.application.usecase.product;
+
+import com.intcomex.intcomex_api.application.port.in.product.GetProductByIdPort;
+import com.intcomex.intcomex_api.application.port.out.ProductStorageRepository;
+import com.intcomex.intcomex_api.config.exception.CustomException;
+import com.intcomex.intcomex_api.config.exception.DataBaseException;
+import com.intcomex.intcomex_api.config.exception.SPError;
+import com.intcomex.intcomex_api.domain.model.ProductDomain;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Service;
+
+public class GetProductByIdUseCase implements GetProductByIdPort {
+
+    private static final Logger logger = LoggerFactory.getLogger(GetProductByIdUseCase.class);
+    private final ProductStorageRepository repository;
+
+    public GetProductByIdUseCase(ProductStorageRepository repository) {
+        this.repository = repository;
+    }
+
+    @Override
+    public ProductDomain getById(Long id) {
+        try {
+            logger.info("Trying to retrieve the product by ID: {}", id);
+
+            ProductDomain existingProduct = repository.getById(id);
+            if (existingProduct == null) {
+                logger.error("Product not found with ID: {}", id);
+                throw new CustomException(SPError.CONTROLLER_ERROR_FIND_BY_ID.getErrorCode(), "Product not found");
+            }
+
+            return existingProduct;
+        } catch (DataBaseException d) {
+            logger.error("Error retrieving product by ID: {}", d.getMessage());
+            throw new CustomException(SPError.DATABASE_ADAPTER_FIND_ERROR.getErrorCode(), SPError.DATABASE_ADAPTER_FIND_ERROR.getErrorMessage(), d);
+        }
+    }
+}
+
+----- ./src/main/java/com/intcomex/intcomex_api/application/usecase/category/GetCategoryByIdUseCase.java -----
+package com.intcomex.intcomex_api.application.usecase.category;
+
+import com.intcomex.intcomex_api.application.port.in.category.GetCategoryByIdPort;
+import com.intcomex.intcomex_api.application.port.out.CategoryStorageRepository;
+import com.intcomex.intcomex_api.config.exception.CustomException;
+import com.intcomex.intcomex_api.config.exception.DataBaseException;
+import com.intcomex.intcomex_api.config.exception.SPError;
+import com.intcomex.intcomex_api.domain.model.CategoryDomain;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+public class GetCategoryByIdUseCase implements GetCategoryByIdPort {
+
+    private static final Logger logger = LoggerFactory.getLogger(GetCategoryByIdUseCase.class);
+    private final CategoryStorageRepository repository;
+    public GetCategoryByIdUseCase(CategoryStorageRepository repository) {
+        this.repository = repository;
+    }
+
+    @Override
+    public CategoryDomain getById(Long id) {
+        try {
+            logger.info("Trying to retrieve the category by ID: {}", id);
+
+            CategoryDomain existingCategory = repository.getById(id);
+            if (existingCategory == null) {
+                logger.error("Category not found with ID: {}", id);
+                throw new CustomException(SPError.CONTROLLER_ERROR_FIND_BY_ID.getErrorCode(), "Category not found");
+            }
+
+            return existingCategory;
+        } catch (DataBaseException d) {
+            logger.error("Error retrieving category by ID: {}", d.getMessage());
+            throw new CustomException(SPError.DATABASE_ADAPTER_FIND_ERROR.getErrorCode(), SPError.DATABASE_ADAPTER_FIND_ERROR.getErrorMessage(), d);
+        }
+    }
+}
+
+----- ./src/main/java/com/intcomex/intcomex_api/application/usecase/category/DeleteCategoryUseCase.java -----
+package com.intcomex.intcomex_api.application.usecase.category;
+
+import com.intcomex.intcomex_api.application.port.in.category.DeleteCategoryPort;
+import com.intcomex.intcomex_api.application.port.in.category.GetCategoryByIdPort;
+import com.intcomex.intcomex_api.application.port.out.CategoryStorageRepository;
+import com.intcomex.intcomex_api.config.exception.CustomException;
+import com.intcomex.intcomex_api.config.exception.DataBaseException;
+import com.intcomex.intcomex_api.config.exception.SPError;
+import com.intcomex.intcomex_api.domain.model.CategoryDomain;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+
+public class DeleteCategoryUseCase implements DeleteCategoryPort {
+
+    private static final Logger logger = LoggerFactory.getLogger(DeleteCategoryUseCase.class);
+    private final CategoryStorageRepository repository;
+    private final GetCategoryByIdPort getCategoryByIdPort;
+
+    public DeleteCategoryUseCase(CategoryStorageRepository repository, GetCategoryByIdPort getCategoryByIdPort) {
+        this.repository = repository;
+        this.getCategoryByIdPort = getCategoryByIdPort;
+    }
+
+    @Override
+    public void delete(Long id) {
+        try {
+            logger.info("Trying to delete the category with ID: {}", id);
+
+            CategoryDomain existingCategory = getCategoryByIdPort.getById(id);
+            if (existingCategory == null) {
+                logger.error("Category not found with ID: {}", id);
+                throw new CustomException(SPError.CONTROLLER_ERROR_DELETE.getErrorCode(), "Category not found");
+            }
+
+            repository.delete(id);
+        } catch (DataBaseException d) {
+            logger.error("Error deleting category: {}", d.getMessage());
+            throw new CustomException(SPError.DATABASE_ADAPTER_DELETE_ERROR.getErrorCode(), SPError.DATABASE_ADAPTER_DELETE_ERROR.getErrorMessage(), d);
+        } catch (CustomException e) {
+            logger.error("Error validating category: {}", e.getMessage());
+            throw e;
+        }
+    }
+}
+
+----- ./src/main/java/com/intcomex/intcomex_api/application/usecase/category/CreateCategoryUseCase.java -----
+package com.intcomex.intcomex_api.application.usecase.category;
+
+
+import com.intcomex.intcomex_api.application.port.in.category.CreateCategoryPort;
+import com.intcomex.intcomex_api.application.port.out.CategoryStorageRepository;
+import com.intcomex.intcomex_api.config.exception.CustomException;
+import com.intcomex.intcomex_api.config.exception.DataBaseException;
+import com.intcomex.intcomex_api.config.exception.SPError;
+import com.intcomex.intcomex_api.domain.model.CategoryDomain;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+public class CreateCategoryUseCase implements CreateCategoryPort {
+
+    private static final Logger logger = LoggerFactory.getLogger(CreateCategoryUseCase.class);
+    private final CategoryStorageRepository repository;
+
+    public CreateCategoryUseCase(CategoryStorageRepository repository) {
+        this.repository = repository;
+    }
+
+    public CategoryDomain create(CategoryDomain domain) {
+        try {
+            logger.info("Trying to save the category: {}", domain);
+            return repository.save(domain);
+        }catch (DataBaseException d){
+            logger.error("Error saving category: {}", d.getMessage());
+            throw new CustomException(SPError.DATABASE_ADAPTER_SAVE_ERROR.getErrorCode(), SPError.DATABASE_ADAPTER_SAVE_ERROR.getErrorMessage(), d);
+        }
+    }
+}
+
+----- ./src/main/java/com/intcomex/intcomex_api/application/usecase/category/GetAllCategoriesUseCase.java -----
+package com.intcomex.intcomex_api.application.usecase.category;
+
+import com.intcomex.intcomex_api.application.port.in.category.GetAllCategoryPort;
+import com.intcomex.intcomex_api.application.port.out.CategoryStorageRepository;
+import com.intcomex.intcomex_api.config.exception.CustomException;
+import com.intcomex.intcomex_api.config.exception.DataBaseException;
+import com.intcomex.intcomex_api.config.exception.SPError;
+import com.intcomex.intcomex_api.domain.model.CategoryDomain;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.data.domain.Page;
+
+import java.util.List;
+
+public class GetAllCategoriesUseCase implements GetAllCategoryPort {
+
+    private static final Logger logger = LoggerFactory.getLogger(GetAllCategoriesUseCase.class);
+    private final CategoryStorageRepository repository;
+
+    public GetAllCategoriesUseCase(CategoryStorageRepository repository) {
+        this.repository = repository;
+    }
+
+    @Override
+    public List<CategoryDomain> getAll() {
+        try {
+            logger.info("Trying to retrieve all categories");
+            return repository.getAll();
+        } catch (DataBaseException d) {
+            logger.error("Error retrieving categories: {}", d.getMessage());
+            throw new CustomException(SPError.DATABASE_ADAPTER_FIND_ERROR.getErrorCode(), SPError.DATABASE_ADAPTER_FIND_ERROR.getErrorMessage(), d);
+        }
+    }
+
+    @Override
+    public Page<CategoryDomain> getAllPaginated(int page, int size) {
+        try {
+            logger.info("Trying to retrieve all categories");
+            return repository.getAllPaginated(page, size);
+        } catch (DataBaseException d) {
+            logger.error("Error retrieving categories: {}", d.getMessage());
+            throw new CustomException(SPError.DATABASE_ADAPTER_FIND_ERROR.getErrorCode(), SPError.DATABASE_ADAPTER_FIND_ERROR.getErrorMessage(), d);
+        }
+    }
+}
+
+----- ./src/main/java/com/intcomex/intcomex_api/application/usecase/category/UpdateCategoryUseCase.java -----
+package com.intcomex.intcomex_api.application.usecase.category;
+
+import com.intcomex.intcomex_api.application.port.in.category.UpdateCategoryPort;
+import com.intcomex.intcomex_api.application.port.in.category.GetCategoryByIdPort;
+import com.intcomex.intcomex_api.application.port.out.CategoryStorageRepository;
+import com.intcomex.intcomex_api.config.exception.CustomException;
+import com.intcomex.intcomex_api.config.exception.DataBaseException;
+import com.intcomex.intcomex_api.config.exception.SPError;
+import com.intcomex.intcomex_api.domain.model.CategoryDomain;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+public class UpdateCategoryUseCase implements UpdateCategoryPort {
+
+    private static final Logger logger = LoggerFactory.getLogger(UpdateCategoryUseCase.class);
+    private final CategoryStorageRepository repository;
+    private final GetCategoryByIdPort getCategoryByIdPort;
+
+    public UpdateCategoryUseCase(CategoryStorageRepository repository, GetCategoryByIdPort getCategoryByIdPort) {
+        this.repository = repository;
+        this.getCategoryByIdPort = getCategoryByIdPort;
+    }
+
+    @Override
+    public CategoryDomain update(CategoryDomain domain) {
+        try {
+            logger.info("Trying to update the category: {}", domain);
+
+            CategoryDomain existingCategory = getCategoryByIdPort.getById(domain.getId());
+            if (existingCategory == null) {
+                logger.error("Category not found with ID: {}", domain.getId());
+                throw new CustomException(SPError.CONTROLLER_ERROR_UPDATE.getErrorCode(), "Category not found");
+            }
+
+            return repository.update(domain);
+        } catch (DataBaseException d) {
+            logger.error("Error updating category: {}", d.getMessage());
+            throw new CustomException(SPError.DATABASE_ADAPTER_UPDATE_ERROR.getErrorCode(), SPError.DATABASE_ADAPTER_UPDATE_ERROR.getErrorMessage(), d);
+        } catch (CustomException e) {
+            logger.error("Error validating category: {}", e.getMessage());
+            throw e;
+        }
+    }
+}
+
+----- ./src/main/java/com/intcomex/intcomex_api/application/port/in/product/DeleteProductPort.java -----
+package com.intcomex.intcomex_api.application.port.in.product;
+
+public interface DeleteProductPort {
+    void delete(Long id);
+}
+
+----- ./src/main/java/com/intcomex/intcomex_api/application/port/in/product/GetProductByIdPort.java -----
+package com.intcomex.intcomex_api.application.port.in.product;
+
+import com.intcomex.intcomex_api.domain.model.ProductDomain;
+
+public interface GetProductByIdPort {
+    ProductDomain getById(Long id);
+}
+
+----- ./src/main/java/com/intcomex/intcomex_api/application/port/in/product/GetAllProductsPort.java -----
+package com.intcomex.intcomex_api.application.port.in.product;
+
+import com.intcomex.intcomex_api.domain.model.ProductDomain;
+import org.springframework.data.domain.Page;
+
+import java.util.List;
+
+public interface GetAllProductsPort {
+    List<ProductDomain> getAll();
+
+    Page<ProductDomain> getAllPaginated(int page, int size);
+}
+
+----- ./src/main/java/com/intcomex/intcomex_api/application/port/in/product/UpdateProductPort.java -----
+package com.intcomex.intcomex_api.application.port.in.product;
+
+import com.intcomex.intcomex_api.domain.model.ProductDomain;
+
+public interface UpdateProductPort {
+    ProductDomain update(ProductDomain domain);
+}
+
+----- ./src/main/java/com/intcomex/intcomex_api/application/port/in/product/CreateProductPort.java -----
+package com.intcomex.intcomex_api.application.port.in.product;
+
+import com.intcomex.intcomex_api.domain.model.ProductDomain;
+
+public interface CreateProductPort {
+    ProductDomain create(ProductDomain domain);
+}
+
+----- ./src/main/java/com/intcomex/intcomex_api/application/port/in/category/UpdateCategoryPort.java -----
+package com.intcomex.intcomex_api.application.port.in.category;
+
+import com.intcomex.intcomex_api.domain.model.CategoryDomain;
+
+public interface UpdateCategoryPort {
+    CategoryDomain update(CategoryDomain domain);
+}
+
+----- ./src/main/java/com/intcomex/intcomex_api/application/port/in/category/GetCategoryByIdPort.java -----
+package com.intcomex.intcomex_api.application.port.in.category;
+
+import com.intcomex.intcomex_api.domain.model.CategoryDomain;
+
+public interface GetCategoryByIdPort {
+    CategoryDomain getById(Long id);
+}
+
+----- ./src/main/java/com/intcomex/intcomex_api/application/port/in/category/GetAllCategoryPort.java -----
+package com.intcomex.intcomex_api.application.port.in.category;
+
+import com.intcomex.intcomex_api.domain.model.CategoryDomain;
+import org.springframework.data.domain.Page;
+
+import java.util.List;
+
+public interface GetAllCategoryPort {
+    List<CategoryDomain> getAll();
+
+    Page<CategoryDomain> getAllPaginated(int page, int size);
+}
+
+----- ./src/main/java/com/intcomex/intcomex_api/application/port/in/category/DeleteCategoryPort.java -----
+package com.intcomex.intcomex_api.application.port.in.category;
+
+public interface DeleteCategoryPort {
+    void delete(Long id);
+}
+
+
+----- ./src/main/java/com/intcomex/intcomex_api/application/port/in/category/CreateCategoryPort.java -----
+package com.intcomex.intcomex_api.application.port.in.category;
+
+import com.intcomex.intcomex_api.domain.model.CategoryDomain;
+
+public interface CreateCategoryPort {
+    CategoryDomain create(CategoryDomain domain);
+}
+
+----- ./src/main/java/com/intcomex/intcomex_api/application/port/out/ProductStorageRepository.java -----
+package com.intcomex.intcomex_api.application.port.out;
+
+import com.intcomex.intcomex_api.domain.model.ProductDomain;
+import org.springframework.data.domain.Page;
+
+import java.util.List;
+
+public interface ProductStorageRepository {
+    ProductDomain save(ProductDomain domain);
+    List<ProductDomain> getAll();
+    ProductDomain getById(Long id);
+    Page<ProductDomain> getAllPaginated(int page, int size);
+    ProductDomain update(ProductDomain domain);
+    void delete(Long id);
+}
+
+----- ./src/main/java/com/intcomex/intcomex_api/application/port/out/CategoryStorageRepository.java -----
+package com.intcomex.intcomex_api.application.port.out;
+
+import com.intcomex.intcomex_api.domain.model.CategoryDomain;
+import org.springframework.data.domain.Page;
+
+import java.util.List;
+
+public interface CategoryStorageRepository {
+
+    CategoryDomain save(CategoryDomain domain);
+    List<CategoryDomain> getAll();
+    CategoryDomain getById(Long id);
+    Page<CategoryDomain> getAllPaginated(int page, int size);
+    CategoryDomain update(CategoryDomain domain);
+    void delete(Long id);
+}
+
+----- ./src/main/java/com/intcomex/intcomex_api/domain/model/ProductDomain.java -----
+package com.intcomex.intcomex_api.domain.model;
+
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+import java.math.BigDecimal;
+
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+public class ProductDomain {
+    private Long id;
+    private String name;
+    private BigDecimal price;
+    private CategoryDomain category;
+}
+
+----- ./src/main/java/com/intcomex/intcomex_api/domain/model/CategoryDomain.java -----
+package com.intcomex.intcomex_api.domain.model;
+
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.ToString;
+
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+@ToString
+public class CategoryDomain {
+
+    private Long id;
+    private String name;
+    private String imageUrl;
+}
+
+----- ./src/main/java/com/intcomex/intcomex_api/IntcomexApiApplication.java -----
+package com.intcomex.intcomex_api;
+
+import com.intcomex.intcomex_api.config.exception.LoadAppException;
+import com.intcomex.intcomex_api.config.exception.SPError;
+import io.github.cdimascio.dotenv.Dotenv;
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
+
+@SpringBootApplication
+@EnableConfigurationProperties
+public class IntcomexApiApplication {
+
+	public static void main(String[] args) {
+		try {
+			Dotenv dotenv = Dotenv.load();
+			dotenv.entries().forEach(entry -> System.setProperty(entry.getKey(), entry.getValue()));
+		} catch (Exception e) {
+			throw new LoadAppException(SPError.APP_LOAD_ERROR.getErrorCode(), SPError.APP_LOAD_ERROR.getErrorMessage(), e);
+		}
+		SpringApplication.run(IntcomexApiApplication.class, args);
+	}
+
+}
+
+----- ./src/main/resources/db/migration/V1__create_tables.sql -----
+-- V1__create_tables.sql
+
+CREATE TABLE category (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    image_url VARCHAR(255) NOT NULL
+);
+
+CREATE TABLE product (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    price DECIMAL NOT NULL,
+    category_id BIGINT NOT NULL,
+    CONSTRAINT fk_category FOREIGN KEY (category_id) REFERENCES category(id)
+);
+
+----- ./src/main/resources/application.yml -----
+spring:
+  application:
+    name: intcomex-api
+    title: intcomex-api
+  datasource:
+    url: ${SPRING_DATASOURCE_URL}
+    driverClassName: "org.postgresql.Driver"
+    username: ${SPRING_DATASOURCE_USERNAME}
+    password: ${SPRING_DATASOURCE_PASSWORD}
+  jpa:
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    show-sql: false
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        format_sql: true
+
+server:
+  servlet:
+    context-path: /intcomex-api
+
+logging:
+  level:
+    root: INFO
+    org.springframework: INFO
+    org.hibernate: INFO
+
+----- ./src/test/java/com/intcomex/intcomex_api/adapter/postgres/CategoryPostgresAdapterTest.java -----
+package com.intcomex.intcomex_api.adapter.postgres;
+
+import com.intcomex.intcomex_api.adapter.postgres.models.CategoryEntity;
+import com.intcomex.intcomex_api.config.exception.DataBaseException;
+import com.intcomex.intcomex_api.domain.model.CategoryDomain;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+
+import java.util.Arrays;
+import java.util.List;
+import java.util.Optional;
+
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
+
+class CategoryPostgresAdapterTest {
+
+    @Mock
+    private CategoryPostgresRepository repository;
+
+    @InjectMocks
+    private CategoryPostgresAdapter adapter;
+
+    private CategoryDomain categoryDomain;
+    private CategoryEntity categoryEntity;
+
+    @BeforeEach
+    void setUp() {
+        MockitoAnnotations.openMocks(this);
+
+        categoryDomain = new CategoryDomain(1L, "Electronics", "http://example.com/electronics.png");
+        categoryEntity = CategoryEntity.fromDomain(categoryDomain);
+    }
+
+    @Test
+    void save_shouldReturnSavedCategory_whenSuccessful() {
+        when(repository.save(any(CategoryEntity.class))).thenReturn(categoryEntity);
+
+        CategoryDomain result = adapter.save(categoryDomain);
+
+        assertNotNull(result);
+        assertEquals(categoryDomain.getId(), result.getId());
+        verify(repository, times(1)).save(any(CategoryEntity.class));
+    }
+
+    @Test
+    void save_shouldThrowDataBaseException_whenRepositoryThrowsException() {
+        when(repository.save(any(CategoryEntity.class))).thenThrow(RuntimeException.class);
+
+        assertThrows(DataBaseException.class, () -> adapter.save(categoryDomain));
+        verify(repository, times(1)).save(any(CategoryEntity.class));
+    }
+
+    @Test
+    void getAll_shouldReturnListOfCategories_whenSuccessful() {
+        when(repository.findAll()).thenReturn(Arrays.asList(categoryEntity));
+
+        List<CategoryDomain> result = adapter.getAll();
+
+        assertNotNull(result);
+        assertEquals(1, result.size());
+        assertEquals(categoryDomain.getId(), result.get(0).getId());
+        verify(repository, times(1)).findAll();
+    }
+
+    @Test
+    void getAll_shouldThrowDataBaseException_whenRepositoryThrowsException() {
+        when(repository.findAll()).thenThrow(RuntimeException.class);
+
+        assertThrows(DataBaseException.class, () -> adapter.getAll());
+        verify(repository, times(1)).findAll();
+    }
+
+    @Test
+    void getById_shouldReturnCategory_whenFound() {
+        when(repository.findById(anyLong())).thenReturn(Optional.of(categoryEntity));
+
+        CategoryDomain result = adapter.getById(1L);
+
+        assertNotNull(result);
+        assertEquals(categoryDomain.getId(), result.getId());
+        verify(repository, times(1)).findById(anyLong());
+    }
+
+    @Test
+    void getById_shouldThrowDataBaseException_whenNotFound() {
+        when(repository.findById(anyLong())).thenReturn(Optional.empty());
+
+        assertThrows(DataBaseException.class, () -> adapter.getById(1L));
+        verify(repository, times(1)).findById(anyLong());
+    }
+
+    @Test
+    void getAllPaginated_shouldReturnPageOfCategories_whenSuccessful() {
+        Pageable pageable = PageRequest.of(0, 10);
+        Page<CategoryEntity> page = new PageImpl<>(Arrays.asList(categoryEntity));
+        when(repository.findAll(pageable)).thenReturn(page);
+
+        Page<CategoryDomain> result = adapter.getAllPaginated(0, 10);
+
+        assertNotNull(result);
+        assertEquals(1, result.getContent().size());
+        assertEquals(categoryDomain.getId(), result.getContent().get(0).getId());
+        verify(repository, times(1)).findAll(pageable);
+    }
+
+    @Test
+    void getAllPaginated_shouldThrowDataBaseException_whenRepositoryThrowsException() {
+        Pageable pageable = PageRequest.of(0, 10);
+        when(repository.findAll(pageable)).thenThrow(RuntimeException.class);
+
+        assertThrows(DataBaseException.class, () -> adapter.getAllPaginated(0, 10));
+        verify(repository, times(1)).findAll(pageable);
+    }
+
+    @Test
+    void update_shouldReturnUpdatedCategory_whenSuccessful() {
+        when(repository.existsById(anyLong())).thenReturn(true);
+        when(repository.save(any(CategoryEntity.class))).thenReturn(categoryEntity);
+
+        CategoryDomain result = adapter.update(categoryDomain);
+
+        assertNotNull(result);
+        assertEquals(categoryDomain.getId(), result.getId());
+        verify(repository, times(1)).existsById(anyLong());
+        verify(repository, times(1)).save(any(CategoryEntity.class));
+    }
+
+    @Test
+    void update_shouldThrowDataBaseException_whenNotFound() {
+        when(repository.existsById(anyLong())).thenReturn(false);
+
+        assertThrows(DataBaseException.class, () -> adapter.update(categoryDomain));
+        verify(repository, times(1)).existsById(anyLong());
+    }
+
+    @Test
+    void delete_shouldPerformDelete_whenSuccessful() {
+        doNothing().when(repository).deleteById(anyLong());
+
+        assertDoesNotThrow(() -> adapter.delete(1L));
+        verify(repository, times(1)).deleteById(anyLong());
+    }
+
+    @Test
+    void delete_shouldThrowDataBaseException_whenRepositoryThrowsException() {
+        doThrow(RuntimeException.class).when(repository).deleteById(anyLong());
+
+        assertThrows(DataBaseException.class, () -> adapter.delete(1L));
+        verify(repository, times(1)).deleteById(anyLong());
+    }
+}
+
+----- ./src/test/java/com/intcomex/intcomex_api/adapter/postgres/ProductPostgresAdapterTest.java -----
+package com.intcomex.intcomex_api.adapter.postgres;
+
+import com.intcomex.intcomex_api.adapter.postgres.models.ProductEntity;
+import com.intcomex.intcomex_api.config.exception.DataBaseException;
+import com.intcomex.intcomex_api.domain.model.ProductDomain;
+import com.intcomex.intcomex_api.domain.model.CategoryDomain;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+
+import java.math.BigDecimal;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Optional;
+
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
+
+class ProductPostgresAdapterTest {
+
+    @Mock
+    private ProductPostgresRepository repository;
+
+    @InjectMocks
+    private ProductPostgresAdapter adapter;
+
+    private ProductDomain productDomain;
+    private ProductEntity productEntity;
+
+    @BeforeEach
+    void setUp() {
+        MockitoAnnotations.openMocks(this);
+
+        CategoryDomain category = new CategoryDomain();
+        category.setId(1L);
+
+        productDomain = new ProductDomain(1L, "Laptop", new BigDecimal("1500.00"), category);
+        productEntity = ProductEntity.fromDomain(productDomain);
+    }
+
+    @Test
+    void save_shouldReturnSavedProduct_whenSuccessful() {
+        when(repository.save(any(ProductEntity.class))).thenReturn(productEntity);
+
+        ProductDomain result = adapter.save(productDomain);
+
+        assertNotNull(result);
+        assertEquals(productDomain.getId(), result.getId());
+        verify(repository, times(1)).save(any(ProductEntity.class));
+    }
+
+    @Test
+    void save_shouldThrowDataBaseException_whenRepositoryThrowsException() {
+        when(repository.save(any(ProductEntity.class))).thenThrow(RuntimeException.class);
+
+        assertThrows(DataBaseException.class, () -> adapter.save(productDomain));
+        verify(repository, times(1)).save(any(ProductEntity.class));
+    }
+
+    @Test
+    void getAll_shouldReturnListOfProducts_whenSuccessful() {
+        when(repository.findAll()).thenReturn(Arrays.asList(productEntity));
+
+        List<ProductDomain> result = adapter.getAll();
+
+        assertNotNull(result);
+        assertEquals(1, result.size());
+        assertEquals(productDomain.getId(), result.get(0).getId());
+        verify(repository, times(1)).findAll();
+    }
+
+    @Test
+    void getAll_shouldThrowDataBaseException_whenRepositoryThrowsException() {
+        when(repository.findAll()).thenThrow(RuntimeException.class);
+
+        assertThrows(DataBaseException.class, () -> adapter.getAll());
+        verify(repository, times(1)).findAll();
+    }
+
+    @Test
+    void getById_shouldReturnProduct_whenFound() {
+        when(repository.findById(anyLong())).thenReturn(Optional.of(productEntity));
+
+        ProductDomain result = adapter.getById(1L);
+
+        assertNotNull(result);
+        assertEquals(productDomain.getId(), result.getId());
+        verify(repository, times(1)).findById(anyLong());
+    }
+
+    @Test
+    void getById_shouldThrowDataBaseException_whenNotFound() {
+        when(repository.findById(anyLong())).thenReturn(Optional.empty());
+
+        assertThrows(DataBaseException.class, () -> adapter.getById(1L));
+        verify(repository, times(1)).findById(anyLong());
+    }
+
+    @Test
+    void getAllPaginated_shouldReturnPageOfProducts_whenSuccessful() {
+        Pageable pageable = PageRequest.of(0, 10);
+        Page<ProductEntity> page = new PageImpl<>(Arrays.asList(productEntity));
+        when(repository.findAll(pageable)).thenReturn(page);
+
+        Page<ProductDomain> result = adapter.getAllPaginated(0, 10);
+
+        assertNotNull(result);
+        assertEquals(1, result.getContent().size());
+        assertEquals(productDomain.getId(), result.getContent().get(0).getId());
+        verify(repository, times(1)).findAll(pageable);
+    }
+
+    @Test
+    void getAllPaginated_shouldThrowDataBaseException_whenRepositoryThrowsException() {
+        Pageable pageable = PageRequest.of(0, 10);
+        when(repository.findAll(pageable)).thenThrow(RuntimeException.class);
+
+        assertThrows(DataBaseException.class, () -> adapter.getAllPaginated(0, 10));
+        verify(repository, times(1)).findAll(pageable);
+    }
+
+    @Test
+    void update_shouldReturnUpdatedProduct_whenSuccessful() {
+        when(repository.existsById(anyLong())).thenReturn(true);
+        when(repository.save(any(ProductEntity.class))).thenReturn(productEntity);
+
+        ProductDomain result = adapter.update(productDomain);
+
+        assertNotNull(result);
+        assertEquals(productDomain.getId(), result.getId());
+        verify(repository, times(1)).existsById(anyLong());
+        verify(repository, times(1)).save(any(ProductEntity.class));
+    }
+
+    @Test
+    void update_shouldThrowDataBaseException_whenNotFound() {
+        when(repository.existsById(anyLong())).thenReturn(false);
+
+        assertThrows(DataBaseException.class, () -> adapter.update(productDomain));
+        verify(repository, times(1)).existsById(anyLong());
+    }
+
+    @Test
+    void delete_shouldPerformDelete_whenSuccessful() {
+        doNothing().when(repository).deleteById(anyLong());
+
+        assertDoesNotThrow(() -> adapter.delete(1L));
+        verify(repository, times(1)).deleteById(anyLong());
+    }
+
+    @Test
+    void delete_shouldThrowDataBaseException_whenRepositoryThrowsException() {
+        doThrow(RuntimeException.class).when(repository).deleteById(anyLong());
+
+        assertThrows(DataBaseException.class, () -> adapter.delete(1L));
+        verify(repository, times(1)).deleteById(anyLong());
+    }
+}
+
+----- ./src/test/java/com/intcomex/intcomex_api/adapter/controller/CategoryControllerTest.java -----
+package com.intcomex.intcomex_api.adapter.controller;
+
+import com.intcomex.intcomex_api.adapter.controller.models.CategoryRequest;
+import com.intcomex.intcomex_api.application.port.in.category.*;
+import com.intcomex.intcomex_api.config.exception.CustomException;
+import com.intcomex.intcomex_api.config.exception.SPError;
+import com.intcomex.intcomex_api.domain.model.CategoryDomain;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.http.ResponseEntity;
+import org.springframework.validation.BindingResult;
+
+import java.util.Arrays;
+
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.Mockito.*;
+import static org.springframework.http.HttpStatus.*;
+
+class CategoryControllerTest {
+
+    @Mock
+    private CreateCategoryPort createCategoryPort;
+
+    @Mock
+    private DeleteCategoryPort deleteCategoryPort;
+
+    @Mock
+    private GetAllCategoryPort getAllCategoryPort;
+
+    @Mock
+    private GetCategoryByIdPort getCategoryByIdPort;
+
+    @Mock
+    private UpdateCategoryPort updateCategoryPort;
+
+    @InjectMocks
+    private CategoryController categoryController;
+
+    private CategoryRequest categoryRequest;
+    private CategoryDomain categoryDomain;
+    private BindingResult bindingResult;
+
+    @BeforeEach
+    void setUp() {
+        MockitoAnnotations.openMocks(this);
+
+        categoryRequest = new CategoryRequest();
+        categoryRequest.setName("Electronics");
+        categoryRequest.setImageUrl("http://example.com/electronics.png");
+
+        categoryDomain = new CategoryDomain();
+        categoryDomain.setId(1L);
+        categoryDomain.setName("Electronics");
+        categoryDomain.setImageUrl("http://example.com/electronics.png");
+
+        bindingResult = mock(BindingResult.class);
+    }
+
+    @Test
+    void createCategory_shouldReturnCreatedCategory_whenSuccessful() {
+        when(bindingResult.hasErrors()).thenReturn(false);
+        when(createCategoryPort.create(any(CategoryDomain.class))).thenReturn(categoryDomain);
+
+        ResponseEntity<Object> response = categoryController.createCategory(categoryRequest, bindingResult);
+
+        assertEquals(CREATED, response.getStatusCode());
+        assertNotNull(response.getBody());
+        verify(createCategoryPort, times(1)).create(any(CategoryDomain.class));
+    }
+
+    @Test
+    void createCategory_shouldReturnBadRequest_whenValidationFails() {
+        when(bindingResult.hasErrors()).thenReturn(true);
+
+        ResponseEntity<Object> response = categoryController.createCategory(categoryRequest, bindingResult);
+
+        assertEquals(BAD_REQUEST, response.getStatusCode());
+        verify(createCategoryPort, never()).create(any(CategoryDomain.class));
+    }
+
+    @Test
+    void getAllCategories_shouldReturnCategories_whenSuccessful() {
+        Page<CategoryDomain> page = new PageImpl<>(Arrays.asList(categoryDomain));
+        when(getAllCategoryPort.getAllPaginated(anyInt(), anyInt())).thenReturn(page);
+
+        ResponseEntity<Object> response = categoryController.getAllCategories(0, 10);
+
+        assertEquals(OK, response.getStatusCode());
+        assertNotNull(response.getBody());
+        verify(getAllCategoryPort, times(1)).getAllPaginated(anyInt(), anyInt());
+    }
+
+    @Test
+    void getCategoryById_shouldReturnCategory_whenFound() {
+        when(getCategoryByIdPort.getById(anyLong())).thenReturn(categoryDomain);
+
+        ResponseEntity<Object> response = categoryController.getCategoryById(1L);
+
+        assertEquals(OK, response.getStatusCode());
+        assertNotNull(response.getBody());
+        verify(getCategoryByIdPort, times(1)).getById(anyLong());
+    }
+
+    @Test
+    void getCategoryById_shouldReturnNotFound_whenCategoryNotFound() {
+        when(getCategoryByIdPort.getById(anyLong())).thenThrow(new CustomException(SPError.CONTROLLER_ERROR_FIND_BY_ID.getErrorCode(), "Category not found"));
+
+        ResponseEntity<Object> response = categoryController.getCategoryById(1L);
+
+        assertEquals(NOT_FOUND, response.getStatusCode());
+        verify(getCategoryByIdPort, times(1)).getById(anyLong());
+    }
+
+    @Test
+    void updateCategory_shouldReturnUpdatedCategory_whenSuccessful() {
+        when(bindingResult.hasErrors()).thenReturn(false);
+        when(updateCategoryPort.update(any(CategoryDomain.class))).thenReturn(categoryDomain);
+
+        ResponseEntity<Object> response = categoryController.updateCategory(1L, categoryRequest, bindingResult);
+
+        assertEquals(OK, response.getStatusCode());
+        assertNotNull(response.getBody());
+        verify(updateCategoryPort, times(1)).update(any(CategoryDomain.class));
+    }
+
+    @Test
+    void updateCategory_shouldReturnBadRequest_whenValidationFails() {
+        when(bindingResult.hasErrors()).thenReturn(true);
+
+        ResponseEntity<Object> response = categoryController.updateCategory(1L, categoryRequest, bindingResult);
+
+        assertEquals(BAD_REQUEST, response.getStatusCode());
+        verify(updateCategoryPort, never()).update(any(CategoryDomain.class));
+    }
+
+    @Test
+    void deleteCategory_shouldReturnNoContent_whenSuccessful() {
+        doNothing().when(deleteCategoryPort).delete(anyLong());
+
+        ResponseEntity<Object> response = categoryController.deleteCategory(1L);
+
+        assertEquals(NO_CONTENT, response.getStatusCode());
+        verify(deleteCategoryPort, times(1)).delete(anyLong());
+    }
+
+    @Test
+    void deleteCategory_shouldReturnNotFound_whenCategoryNotFound() {
+        doThrow(new CustomException(SPError.CONTROLLER_ERROR_DELETE.getErrorCode(), "Category not found")).when(deleteCategoryPort).delete(anyLong());
+
+        ResponseEntity<Object> response = categoryController.deleteCategory(1L);
+
+        assertEquals(NOT_FOUND, response.getStatusCode());
+        verify(deleteCategoryPort, times(1)).delete(anyLong());
+    }
+}
+
+----- ./src/test/java/com/intcomex/intcomex_api/adapter/controller/ProductControllerTest.java -----
+package com.intcomex.intcomex_api.adapter.controller;
+
+import com.intcomex.intcomex_api.adapter.controller.models.CategoryRequest;
+import com.intcomex.intcomex_api.adapter.controller.models.ProductRequest;
+import com.intcomex.intcomex_api.application.port.in.category.GetCategoryByIdPort;
+import com.intcomex.intcomex_api.application.port.in.product.*;
+import com.intcomex.intcomex_api.config.exception.CustomException;
+import com.intcomex.intcomex_api.config.exception.SPError;
+import com.intcomex.intcomex_api.domain.model.CategoryDomain;
+import com.intcomex.intcomex_api.domain.model.ProductDomain;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.http.ResponseEntity;
+import org.springframework.validation.BindingResult;
+
+import java.math.BigDecimal;
+import java.util.Arrays;
+
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.Mockito.*;
+import static org.springframework.http.HttpStatus.*;
+
+class ProductControllerTest {
+
+    @Mock
+    private CreateProductPort createProductPort;
+
+    @Mock
+    private DeleteProductPort deleteProductPort;
+
+    @Mock
+    private GetAllProductsPort getAllProductsPort;
+
+    @Mock
+    private GetProductByIdPort getProductByIdPort;
+
+    @Mock
+    private UpdateProductPort updateProductPort;
+
+    @Mock
+    private GetCategoryByIdPort getCategoryByIdPort;
+
+    @InjectMocks
+    private ProductController productController;
+
+    private ProductRequest productRequest;
+    private ProductDomain productDomain;
+    private BindingResult bindingResult;
+
+    @BeforeEach
+    void setUp() {
+        MockitoAnnotations.openMocks(this);
+
+        CategoryDomain categoryDomain = new CategoryDomain();
+        categoryDomain.setId(1L);
+        categoryDomain.setName("Electronics");
+        categoryDomain.setImageUrl("http://example.com/electronics.png");
+
+        CategoryRequest categoryRequest = new CategoryRequest();
+        categoryRequest.setId(1L);
+        productRequest = new ProductRequest();
+        productRequest.setName("Laptop");
+        productRequest.setPrice(new BigDecimal("1500.00"));
+        productRequest.setCategory(categoryRequest);
+
+        productDomain = new ProductDomain();
+        productDomain.setId(1L);
+        productDomain.setName("Laptop");
+        productDomain.setPrice(new BigDecimal("1500.00"));
+        productDomain.setCategory(categoryDomain);
+
+        bindingResult = mock(BindingResult.class);
+    }
+
+    @Test
+    void createProduct_shouldReturnCreatedProduct_whenSuccessful() {
+        when(bindingResult.hasErrors()).thenReturn(false);
+        when(createProductPort.create(any(ProductDomain.class))).thenReturn(productDomain);
+
+        ResponseEntity<Object> response = productController.createProduct(productRequest, bindingResult);
+
+        assertEquals(CREATED, response.getStatusCode());
+        assertNotNull(response.getBody());
+        verify(createProductPort, times(1)).create(any(ProductDomain.class));
+    }
+
+    @Test
+    void createProduct_shouldReturnBadRequest_whenValidationFails() {
+        when(bindingResult.hasErrors()).thenReturn(true);
+
+        ResponseEntity<Object> response = productController.createProduct(productRequest, bindingResult);
+
+        assertEquals(BAD_REQUEST, response.getStatusCode());
+        verify(createProductPort, never()).create(any(ProductDomain.class));
+    }
+
+    @Test
+    void getAllProducts_shouldReturnProducts_whenSuccessful() {
+        Page<ProductDomain> page = new PageImpl<>(Arrays.asList(productDomain));
+        when(getAllProductsPort.getAllPaginated(anyInt(), anyInt())).thenReturn(page);
+
+        ResponseEntity<Object> response = productController.getAllProducts(0, 10);
+
+        assertEquals(OK, response.getStatusCode());
+        assertNotNull(response.getBody());
+        verify(getAllProductsPort, times(1)).getAllPaginated(anyInt(), anyInt());
+    }
+
+    @Test
+    void getProductById_shouldReturnProduct_whenFound() {
+        when(getProductByIdPort.getById(anyLong())).thenReturn(productDomain);
+
+        ResponseEntity<Object> response = productController.getProductById(1L);
+
+        assertEquals(OK, response.getStatusCode());
+        assertNotNull(response.getBody());
+        verify(getProductByIdPort, times(1)).getById(anyLong());
+    }
+
+    @Test
+    void getProductById_shouldReturnNotFound_whenProductNotFound() {
+        when(getProductByIdPort.getById(anyLong())).thenThrow(new CustomException(SPError.CONTROLLER_ERROR_FIND_BY_ID.getErrorCode(), "Product not found"));
+
+        ResponseEntity<Object> response = productController.getProductById(1L);
+
+        assertEquals(NOT_FOUND, response.getStatusCode());
+        verify(getProductByIdPort, times(1)).getById(anyLong());
+    }
+
+    @Test
+    void updateProduct_shouldReturnUpdatedProduct_whenSuccessful() {
+        when(bindingResult.hasErrors()).thenReturn(false);
+        when(updateProductPort.update(any(ProductDomain.class))).thenReturn(productDomain);
+
+        ResponseEntity<Object> response = productController.updateProduct(1L, productRequest, bindingResult);
+
+        assertEquals(OK, response.getStatusCode());
+        assertNotNull(response.getBody());
+        verify(updateProductPort, times(1)).update(any(ProductDomain.class));
+    }
+
+    @Test
+    void updateProduct_shouldReturnBadRequest_whenValidationFails() {
+        when(bindingResult.hasErrors()).thenReturn(true);
+
+        ResponseEntity<Object> response = productController.updateProduct(1L, productRequest, bindingResult);
+
+        assertEquals(BAD_REQUEST, response.getStatusCode());
+        verify(updateProductPort, never()).update(any(ProductDomain.class));
+    }
+
+    @Test
+    void deleteProduct_shouldReturnNoContent_whenSuccessful() {
+        doNothing().when(deleteProductPort).delete(anyLong());
+
+        ResponseEntity<Object> response = productController.deleteProduct(1L);
+
+        assertEquals(NO_CONTENT, response.getStatusCode());
+        verify(deleteProductPort, times(1)).delete(anyLong());
+    }
+
+    @Test
+    void deleteProduct_shouldReturnNotFound_whenProductNotFound() {
+        doThrow(new CustomException(SPError.CONTROLLER_ERROR_DELETE.getErrorCode(), "Product not found")).when(deleteProductPort).delete(anyLong());
+
+        ResponseEntity<Object> response = productController.deleteProduct(1L);
+
+        assertEquals(NOT_FOUND, response.getStatusCode());
+        verify(deleteProductPort, times(1)).delete(anyLong());
+    }
+}
+
+----- ./src/test/java/com/intcomex/intcomex_api/integration/CategoryControllerIntegrationTest.java -----
+// src/test/java/com/intcomex/intcomex_api/integration/CategoryControllerIntegrationTest.java
+package com.intcomex.intcomex_api.integration;
+
+import com.intcomex.intcomex_api.adapter.controller.models.CategoryRequest;
+import com.intcomex.intcomex_api.domain.model.CategoryDomain;
+import com.intcomex.intcomex_api.application.port.out.CategoryStorageRepository;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.http.MediaType;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.ResultActions;
+import org.springframework.transaction.annotation.Transactional;
+
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+@SpringBootTest(properties = {"spring.config.location=classpath:application-test.yml"})
+@AutoConfigureMockMvc
+@Transactional
+public class CategoryControllerIntegrationTest {
+
+    @Autowired
+    private MockMvc mockMvc;
+
+    @Autowired
+    private CategoryStorageRepository repository;
+
+    @Autowired
+    private ObjectMapper objectMapper;
+
+    private CategoryDomain categoryDomain;
+
+    @BeforeEach
+    void setUp() {
+        categoryDomain = new CategoryDomain();
+        categoryDomain.setName("Electronics");
+        categoryDomain.setImageUrl("http://example.com/electronics.png");
+
+        categoryDomain = repository.save(categoryDomain);
+    }
+
+    @Test
+    void createCategory_shouldReturnCreatedCategory() throws Exception {
+        CategoryRequest request = new CategoryRequest();
+        request.setName("Books");
+        request.setImageUrl("http://example.com/books.png");
+
+        ResultActions result = mockMvc.perform(post("/category")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)));
+
+        result.andExpect(status().isCreated())
+                .andExpect(jsonPath("$.status").value(true))
+                .andExpect(jsonPath("$.code_status").value(201))
+                .andExpect(jsonPath("$.message").value("Created"))
+                .andExpect(jsonPath("$.data.name").value("Books"))
+                .andExpect(jsonPath("$.data.imageUrl").value("http://example.com/books.png"));
+    }
+
+    @Test
+    void getAllCategories_shouldReturnAllCategories() throws Exception {
+        ResultActions result = mockMvc.perform(get("/category")
+                .param("page", "0")
+                .param("size", "10"));
+
+        result.andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value(true))
+                .andExpect(jsonPath("$.code_status").value(200))
+                .andExpect(jsonPath("$.message").value("OK"))
+                .andExpect(jsonPath("$.data[0].name").value("Electronics"))
+                .andExpect(jsonPath("$.data[0].imageUrl").value("http://example.com/electronics.png"));
+    }
+
+    @Test
+    void getCategoryById_shouldReturnCategory() throws Exception {
+        Long id = categoryDomain.getId();
+
+        ResultActions result = mockMvc.perform(get("/category/{id}", id));
+
+        result.andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value(true))
+                .andExpect(jsonPath("$.code_status").value(200))
+                .andExpect(jsonPath("$.message").value("OK"))
+                .andExpect(jsonPath("$.data.name").value("Electronics"))
+                .andExpect(jsonPath("$.data.imageUrl").value("http://example.com/electronics.png"));
+    }
+
+    @Test
+    void updateCategory_shouldReturnUpdatedCategory() throws Exception {
+        Long id = categoryDomain.getId();
+
+        CategoryRequest request = new CategoryRequest();
+        request.setName("Updated Electronics");
+        request.setImageUrl("http://example.com/updated_electronics.png");
+
+        ResultActions result = mockMvc.perform(put("/category/{id}", id)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)));
+
+        result.andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value(true))
+                .andExpect(jsonPath("$.code_status").value(200))
+                .andExpect(jsonPath("$.message").value("OK"))
+                .andExpect(jsonPath("$.data.name").value("Updated Electronics"))
+                .andExpect(jsonPath("$.data.imageUrl").value("http://example.com/updated_electronics.png"));
+    }
+
+    @Test
+    void deleteCategory_shouldReturnNoContent() throws Exception {
+        Long id = categoryDomain.getId();
+
+        ResultActions result = mockMvc.perform(delete("/category/{id}", id));
+
+        result.andExpect(status().isNoContent());
+    }
+}
+
+----- ./src/test/java/com/intcomex/intcomex_api/integration/ProductControllerIntegrationTest.java -----
+package com.intcomex.intcomex_api.integration;
+
+import com.intcomex.intcomex_api.adapter.controller.models.CategoryRequest;
+import com.intcomex.intcomex_api.adapter.controller.models.ProductRequest;
+import com.intcomex.intcomex_api.domain.model.CategoryDomain;
+import com.intcomex.intcomex_api.domain.model.ProductDomain;
+import com.intcomex.intcomex_api.application.port.out.CategoryStorageRepository;
+import com.intcomex.intcomex_api.application.port.out.ProductStorageRepository;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.http.MediaType;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.ResultActions;
+import org.springframework.transaction.annotation.Transactional;
+
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import java.math.BigDecimal;
+
+@SpringBootTest(properties = {"spring.config.location=classpath:application-test.yml"})
+@AutoConfigureMockMvc
+@Transactional
+public class ProductControllerIntegrationTest {
+
+    @Autowired
+    private MockMvc mockMvc;
+
+    @Autowired
+    private CategoryStorageRepository categoryRepository;
+
+    @Autowired
+    private ProductStorageRepository productRepository;
+
+    @Autowired
+    private ObjectMapper objectMapper;
+
+    private CategoryDomain categoryDomain;
+    private ProductDomain productDomain;
+
+    @BeforeEach
+    void setUp() {
+        categoryDomain = new CategoryDomain();
+        categoryDomain.setName("Electronics");
+        categoryDomain.setImageUrl("http://example.com/electronics.png");
+
+        categoryDomain = categoryRepository.save(categoryDomain);
+
+        productDomain = new ProductDomain();
+        productDomain.setName("Laptop");
+        productDomain.setPrice(new BigDecimal("1500.00"));
+        productDomain.setCategory(categoryDomain);
+
+        productDomain = productRepository.save(productDomain);
+    }
+
+    @Test
+    void createProduct_shouldReturnCreatedProduct() throws Exception {
+        CategoryRequest categoryRequest = new CategoryRequest();
+        categoryRequest.setId(categoryDomain.getId());
+        categoryRequest.setName(categoryDomain.getName());
+        categoryRequest.setImageUrl(categoryDomain.getImageUrl());
+
+        ProductRequest request = new ProductRequest();
+        request.setName("Smartphone");
+        request.setPrice(new BigDecimal("800.00"));
+        request.setCategory(categoryRequest);
+
+        ResultActions result = mockMvc.perform(post("/product")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)));
+
+        result.andExpect(status().isCreated())
+                .andExpect(jsonPath("$.status").value(true))
+                .andExpect(jsonPath("$.code_status").value(201))
+                .andExpect(jsonPath("$.message").value("Created"))
+                .andExpect(jsonPath("$.data.name").value("Smartphone"))
+                .andExpect(jsonPath("$.data.price").value(800.00))
+                .andExpect(jsonPath("$.data.category.id").value(categoryDomain.getId()));
+    }
+
+    @Test
+    void getAllProducts_shouldReturnAllProducts() throws Exception {
+        ResultActions result = mockMvc.perform(get("/product")
+                .param("page", "0")
+                .param("size", "10"));
+
+        result.andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value(true))
+                .andExpect(jsonPath("$.code_status").value(200))
+                .andExpect(jsonPath("$.message").value("OK"))
+                .andExpect(jsonPath("$.data[0].name").value("Laptop"))
+                .andExpect(jsonPath("$.data[0].price").value(1500.00));
+    }
+
+    @Test
+    void getProductById_shouldReturnProduct() throws Exception {
+        Long id = productDomain.getId();
+
+        ResultActions result = mockMvc.perform(get("/product/{id}", id));
+
+        result.andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value(true))
+                .andExpect(jsonPath("$.code_status").value(200))
+                .andExpect(jsonPath("$.message").value("OK"))
+                .andExpect(jsonPath("$.data.name").value("Laptop"))
+                .andExpect(jsonPath("$.data.price").value(1500.00));
+    }
+
+    @Test
+    void updateProduct_shouldReturnUpdatedProduct() throws Exception {
+        Long id = productDomain.getId();
+
+        CategoryRequest categoryRequest = new CategoryRequest();
+        categoryRequest.setId(categoryDomain.getId());
+        categoryRequest.setName(categoryDomain.getName());
+        categoryRequest.setImageUrl(categoryDomain.getImageUrl());
+
+        ProductRequest request = new ProductRequest();
+        request.setName("Updated Laptop");
+        request.setPrice(new BigDecimal("1600.00"));
+        request.setCategory(categoryRequest);
+
+        ResultActions result = mockMvc.perform(put("/product/{id}", id)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)));
+
+        result.andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value(true))
+                .andExpect(jsonPath("$.code_status").value(200))
+                .andExpect(jsonPath("$.message").value("OK"))
+                .andExpect(jsonPath("$.data.name").value("Updated Laptop"))
+                .andExpect(jsonPath("$.data.price").value(1600.00));
+    }
+
+    @Test
+    void deleteProduct_shouldReturnNoContent() throws Exception {
+        Long id = productDomain.getId();
+
+        ResultActions result = mockMvc.perform(delete("/product/{id}", id));
+
+        result.andExpect(status().isNoContent());
+    }
+}
+
+----- ./src/test/java/com/intcomex/intcomex_api/IntcomexApiApplicationTests.java -----
+package com.intcomex.intcomex_api;
+
+import org.junit.jupiter.api.Test;
+import org.springframework.boot.test.context.SpringBootTest;
+
+@SpringBootTest
+class IntcomexApiApplicationTests {
+
+	@Test
+	void contextLoads() {
+	}
+
+}
+
+----- ./src/test/java/com/intcomex/intcomex_api/application/usecase/product/GetProductByIdUseCaseTest.java -----
+package com.intcomex.intcomex_api.application.usecase.product;
+
+import com.intcomex.intcomex_api.application.port.out.ProductStorageRepository;
+import com.intcomex.intcomex_api.config.exception.CustomException;
+import com.intcomex.intcomex_api.config.exception.DataBaseException;
+import com.intcomex.intcomex_api.config.exception.SPError;
+import com.intcomex.intcomex_api.domain.model.CategoryDomain;
+import com.intcomex.intcomex_api.domain.model.ProductDomain;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
+
+import java.math.BigDecimal;
+
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.Mockito.*;
+
+class GetProductByIdUseCaseTest {
+
+    @Mock
+    private ProductStorageRepository repository;
+
+    @InjectMocks
+    private GetProductByIdUseCase useCase;
+
+    private ProductDomain productDomain;
+
+    @BeforeEach
+    void setUp() {
+        MockitoAnnotations.openMocks(this);
+
+        CategoryDomain categoryDomain = new CategoryDomain();
+        categoryDomain.setId(1L);
+
+        productDomain = new ProductDomain();
+        productDomain.setId(1L);
+        productDomain.setName("Laptop");
+        productDomain.setPrice(new BigDecimal("1500.00"));
+        productDomain.setCategory(categoryDomain);
+    }
+
+    @Test
+    void getById_shouldReturnProduct_whenFound() {
+        when(repository.getById(anyLong())).thenReturn(productDomain);
+
+        ProductDomain result = useCase.getById(1L);
+
+        assertNotNull(result);
+        assertEquals(productDomain.getId(), result.getId());
+        verify(repository, times(1)).getById(anyLong());
+    }
+
+    @Test
+    void getById_shouldThrowCustomException_whenProductNotFound() {
+        when(repository.getById(anyLong())).thenReturn(null);
+
+        CustomException exception = assertThrows(CustomException.class, () -> useCase.getById(1L));
+
+        assertEquals(SPError.CONTROLLER_ERROR_FIND_BY_ID.getErrorCode(), exception.getErrorCode());
+        assertEquals("Product not found", exception.getErrorMessage());
+        verify(repository, times(1)).getById(anyLong());
+    }
+
+    @Test
+    void getById_shouldThrowCustomException_whenDataBaseExceptionOccurs() {
+        when(repository.getById(anyLong())).thenThrow(new DataBaseException(SPError.DATABASE_ADAPTER_FIND_ERROR.getErrorCode(), "Database error"));
+
+        CustomException exception = assertThrows(CustomException.class, () -> useCase.getById(1L));
+
+        assertEquals(SPError.DATABASE_ADAPTER_FIND_ERROR.getErrorCode(), exception.getErrorCode());
+        assertEquals(SPError.DATABASE_ADAPTER_FIND_ERROR.getErrorMessage(), exception.getErrorMessage());
+        verify(repository, times(1)).getById(anyLong());
+    }
+}
+
+----- ./src/test/java/com/intcomex/intcomex_api/application/usecase/product/DeleteProductUseCaseTest.java -----
+package com.intcomex.intcomex_api.application.usecase.product;
+
+import com.intcomex.intcomex_api.application.port.in.product.GetProductByIdPort;
+import com.intcomex.intcomex_api.application.port.out.ProductStorageRepository;
+import com.intcomex.intcomex_api.config.exception.CustomException;
+import com.intcomex.intcomex_api.config.exception.DataBaseException;
+import com.intcomex.intcomex_api.config.exception.SPError;
+import com.intcomex.intcomex_api.domain.model.CategoryDomain;
+import com.intcomex.intcomex_api.domain.model.ProductDomain;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
+
+import java.math.BigDecimal;
+
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.Mockito.*;
+
+class DeleteProductUseCaseTest {
+
+    @Mock
+    private ProductStorageRepository repository;
+
+    @Mock
+    private GetProductByIdPort getProductByIdPort;
+
+    @InjectMocks
+    private DeleteProductUseCase useCase;
+
+    private ProductDomain productDomain;
+
+    @BeforeEach
+    void setUp() {
+        MockitoAnnotations.openMocks(this);
+
+        productDomain = new ProductDomain();
+        productDomain.setId(1L);
+        productDomain.setName("Laptop");
+        productDomain.setPrice(new BigDecimal("1500.00"));
+        CategoryDomain category = new CategoryDomain();
+        category.setId(1L);
+        productDomain.setCategory(category);
+    }
+
+    @Test
+    void delete_shouldPerformDelete_whenProductExists() {
+        when(getProductByIdPort.getById(anyLong())).thenReturn(productDomain);
+        doNothing().when(repository).delete(anyLong());
+
+        assertDoesNotThrow(() -> useCase.delete(1L));
+        verify(getProductByIdPort, times(1)).getById(anyLong());
+        verify(repository, times(1)).delete(anyLong());
+    }
+
+    @Test
+    void delete_shouldThrowCustomException_whenProductNotFound() {
+        when(getProductByIdPort.getById(anyLong())).thenReturn(null);
+
+        CustomException exception = assertThrows(CustomException.class, () -> useCase.delete(1L));
+
+        assertEquals(SPError.CONTROLLER_ERROR_DELETE.getErrorCode(), exception.getErrorCode());
+        assertEquals("Product not found", exception.getErrorMessage());
+        verify(getProductByIdPort, times(1)).getById(anyLong());
+        verify(repository, never()).delete(anyLong());
+    }
+
+    @Test
+    void delete_shouldThrowCustomException_whenDataBaseExceptionOccurs() {
+        when(getProductByIdPort.getById(anyLong())).thenReturn(productDomain);
+        doThrow(new DataBaseException(SPError.DATABASE_ADAPTER_DELETE_ERROR.getErrorCode(), "Database error")).when(repository).delete(anyLong());
+
+        CustomException exception = assertThrows(CustomException.class, () -> useCase.delete(1L));
+
+        assertEquals(SPError.DATABASE_ADAPTER_DELETE_ERROR.getErrorCode(), exception.getErrorCode());
+        assertEquals(SPError.DATABASE_ADAPTER_DELETE_ERROR.getErrorMessage(), exception.getErrorMessage());
+        verify(getProductByIdPort, times(1)).getById(anyLong());
+        verify(repository, times(1)).delete(anyLong());
+    }
+}
+
+----- ./src/test/java/com/intcomex/intcomex_api/application/usecase/product/GetAllProductsUseCaseTest.java -----
+package com.intcomex.intcomex_api.application.usecase.product;
+
+import com.intcomex.intcomex_api.application.port.out.ProductStorageRepository;
+import com.intcomex.intcomex_api.config.exception.CustomException;
+import com.intcomex.intcomex_api.config.exception.DataBaseException;
+import com.intcomex.intcomex_api.config.exception.SPError;
+import com.intcomex.intcomex_api.domain.model.CategoryDomain;
+import com.intcomex.intcomex_api.domain.model.ProductDomain;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+
+import java.math.BigDecimal;
+import java.util.Arrays;
+import java.util.List;
+
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
+
+class GetAllProductsUseCaseTest {
+
+    @Mock
+    private ProductStorageRepository repository;
+
+    @InjectMocks
+    private GetAllProductsUseCase useCase;
+
+    private ProductDomain productDomain;
+
+    @BeforeEach
+    void setUp() {
+        MockitoAnnotations.openMocks(this);
+
+        CategoryDomain categoryDomain = new CategoryDomain();
+        categoryDomain.setId(1L);
+
+        productDomain = new ProductDomain();
+        productDomain.setId(1L);
+        productDomain.setName("Laptop");
+        productDomain.setPrice(new BigDecimal("1500.00"));
+        productDomain.setCategory(categoryDomain);
+    }
+
+    @Test
+    void getAll_shouldReturnListOfProducts_whenSuccessful() {
+        when(repository.getAll()).thenReturn(Arrays.asList(productDomain));
+
+        List<ProductDomain> result = useCase.getAll();
+
+        assertNotNull(result);
+        assertEquals(1, result.size());
+        assertEquals(productDomain.getId(), result.get(0).getId());
+        verify(repository, times(1)).getAll();
+    }
+
+    @Test
+    void getAll_shouldThrowCustomException_whenDataBaseExceptionOccurs() {
+        when(repository.getAll()).thenThrow(new DataBaseException(SPError.DATABASE_ADAPTER_FIND_ERROR.getErrorCode(), "Database error"));
+
+        CustomException exception = assertThrows(CustomException.class, () -> useCase.getAll());
+
+        assertEquals(SPError.DATABASE_ADAPTER_FIND_ERROR.getErrorCode(), exception.getErrorCode());
+        assertEquals(SPError.DATABASE_ADAPTER_FIND_ERROR.getErrorMessage(), exception.getErrorMessage());
+        verify(repository, times(1)).getAll();
+    }
+
+    @Test
+    void getAllPaginated_shouldReturnPageOfProducts_whenSuccessful() {
+        Pageable pageable = PageRequest.of(0, 10);
+        Page<ProductDomain> page = new PageImpl<>(Arrays.asList(productDomain));
+        when(repository.getAllPaginated(0, 10)).thenReturn(page);
+
+        Page<ProductDomain> result = useCase.getAllPaginated(0, 10);
+
+        assertNotNull(result);
+        assertEquals(1, result.getContent().size());
+        assertEquals(productDomain.getId(), result.getContent().get(0).getId());
+        verify(repository, times(1)).getAllPaginated(0, 10);
+    }
+
+    @Test
+    void getAllPaginated_shouldThrowCustomException_whenDataBaseExceptionOccurs() {
+        Pageable pageable = PageRequest.of(0, 10);
+        when(repository.getAllPaginated(0, 10)).thenThrow(new DataBaseException(SPError.DATABASE_ADAPTER_FIND_ERROR.getErrorCode(), "Database error"));
+
+        CustomException exception = assertThrows(CustomException.class, () -> useCase.getAllPaginated(0, 10));
+
+        assertEquals(SPError.DATABASE_ADAPTER_FIND_ERROR.getErrorCode(), exception.getErrorCode());
+        assertEquals(SPError.DATABASE_ADAPTER_FIND_ERROR.getErrorMessage(), exception.getErrorMessage());
+        verify(repository, times(1)).getAllPaginated(0, 10);
+    }
+}
+
+----- ./src/test/java/com/intcomex/intcomex_api/application/usecase/product/CreateProductUseCaseTest.java -----
+package com.intcomex.intcomex_api.application.usecase.product;
+
+import com.intcomex.intcomex_api.application.port.in.category.GetCategoryByIdPort;
+import com.intcomex.intcomex_api.application.port.out.ProductStorageRepository;
+import com.intcomex.intcomex_api.config.exception.CustomException;
+import com.intcomex.intcomex_api.config.exception.DataBaseException;
+import com.intcomex.intcomex_api.config.exception.SPError;
+import com.intcomex.intcomex_api.domain.model.CategoryDomain;
+import com.intcomex.intcomex_api.domain.model.ProductDomain;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
+
+import java.math.BigDecimal;
+
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.Mockito.*;
+
+class CreateProductUseCaseTest {
+
+    @Mock
+    private ProductStorageRepository repository;
+
+    @Mock
+    private GetCategoryByIdPort getCategoryByIdPort;
+
+    @InjectMocks
+    private CreateProductUseCase useCase;
+
+    private ProductDomain productDomain;
+    private CategoryDomain categoryDomain;
+
+    @BeforeEach
+    void setUp() {
+        MockitoAnnotations.openMocks(this);
+
+        categoryDomain = new CategoryDomain();
+        categoryDomain.setId(1L);
+        categoryDomain.setName("Electronics");
+        categoryDomain.setImageUrl("http://example.com/electronics.png");
+
+        productDomain = new ProductDomain();
+        productDomain.setId(1L);
+        productDomain.setName("Laptop");
+        productDomain.setPrice(new BigDecimal("1500.00"));
+        productDomain.setCategory(categoryDomain);
+    }
+
+    @Test
+    void create_shouldReturnSavedProduct_whenSuccessful() {
+        when(getCategoryByIdPort.getById(anyLong())).thenReturn(categoryDomain);
+        when(repository.save(any(ProductDomain.class))).thenReturn(productDomain);
+
+        ProductDomain result = useCase.create(productDomain);
+
+        assertNotNull(result);
+        assertEquals(productDomain.getId(), result.getId());
+        verify(getCategoryByIdPort, times(1)).getById(anyLong());
+        verify(repository, times(1)).save(any(ProductDomain.class));
+    }
+
+    @Test
+    void create_shouldThrowCustomException_whenCategoryNotFound() {
+        when(getCategoryByIdPort.getById(anyLong())).thenReturn(null);
+
+        CustomException exception = assertThrows(CustomException.class, () -> useCase.create(productDomain));
+
+        assertEquals(SPError.CONTROLLER_ERROR_UPDATE.getErrorCode(), exception.getErrorCode());
+        assertEquals("Category not found", exception.getErrorMessage());
+        verify(getCategoryByIdPort, times(1)).getById(anyLong());
+        verify(repository, never()).save(any(ProductDomain.class));
+    }
+
+    @Test
+    void create_shouldThrowCustomException_whenDataBaseExceptionOccurs() {
+        when(getCategoryByIdPort.getById(anyLong())).thenReturn(categoryDomain);
+        when(repository.save(any(ProductDomain.class))).thenThrow(new DataBaseException(SPError.DATABASE_ADAPTER_SAVE_ERROR.getErrorCode(), "Database error"));
+
+        CustomException exception = assertThrows(CustomException.class, () -> useCase.create(productDomain));
+
+        assertEquals(SPError.DATABASE_ADAPTER_SAVE_ERROR.getErrorCode(), exception.getErrorCode());
+        assertEquals(SPError.DATABASE_ADAPTER_SAVE_ERROR.getErrorMessage(), exception.getErrorMessage());
+        verify(getCategoryByIdPort, times(1)).getById(anyLong());
+        verify(repository, times(1)).save(any(ProductDomain.class));
+    }
+}
+
+----- ./src/test/java/com/intcomex/intcomex_api/application/usecase/product/UpdateProductUseCaseTest.java -----
+package com.intcomex.intcomex_api.application.usecase.product;
+
+import com.intcomex.intcomex_api.application.port.in.category.GetCategoryByIdPort;
+import com.intcomex.intcomex_api.application.port.in.product.GetProductByIdPort;
+import com.intcomex.intcomex_api.application.port.out.ProductStorageRepository;
+import com.intcomex.intcomex_api.config.exception.CustomException;
+import com.intcomex.intcomex_api.config.exception.DataBaseException;
+import com.intcomex.intcomex_api.config.exception.SPError;
+import com.intcomex.intcomex_api.domain.model.CategoryDomain;
+import com.intcomex.intcomex_api.domain.model.ProductDomain;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
+
+import java.math.BigDecimal;
+
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.Mockito.*;
+
+class UpdateProductUseCaseTest {
+
+    @Mock
+    private ProductStorageRepository repository;
+
+    @Mock
+    private GetCategoryByIdPort getCategoryByIdPort;
+
+    @Mock
+    private GetProductByIdPort getProductByIdPort;
+
+    @InjectMocks
+    private UpdateProductUseCase useCase;
+
+    private ProductDomain productDomain;
+    private CategoryDomain categoryDomain;
+
+    @BeforeEach
+    void setUp() {
+        MockitoAnnotations.openMocks(this);
+
+        categoryDomain = new CategoryDomain();
+        categoryDomain.setId(1L);
+        categoryDomain.setName("Electronics");
+        categoryDomain.setImageUrl("http://example.com/electronics.png");
+
+        productDomain = new ProductDomain();
+        productDomain.setId(1L);
+        productDomain.setName("Laptop");
+        productDomain.setPrice(new BigDecimal("1500.00"));
+        productDomain.setCategory(categoryDomain);
+    }
+
+    @Test
+    void update_shouldReturnUpdatedProduct_whenSuccessful() {
+        when(getProductByIdPort.getById(anyLong())).thenReturn(productDomain);
+        when(getCategoryByIdPort.getById(anyLong())).thenReturn(categoryDomain);
+        when(repository.update(any(ProductDomain.class))).thenReturn(productDomain);
+
+        ProductDomain result = useCase.update(productDomain);
+
+        assertNotNull(result);
+        assertEquals(productDomain.getId(), result.getId());
+        verify(getProductByIdPort, times(1)).getById(anyLong());
+        verify(getCategoryByIdPort, times(1)).getById(anyLong());
+        verify(repository, times(1)).update(any(ProductDomain.class));
+    }
+
+    @Test
+    void update_shouldThrowCustomException_whenProductNotFound() {
+        when(getProductByIdPort.getById(anyLong())).thenReturn(null);
+
+        CustomException exception = assertThrows(CustomException.class, () -> useCase.update(productDomain));
+
+        assertEquals(SPError.CONTROLLER_ERROR_UPDATE.getErrorCode(), exception.getErrorCode());
+        assertEquals("Product not found", exception.getErrorMessage());
+        verify(getProductByIdPort, times(1)).getById(anyLong());
+        verify(getCategoryByIdPort, never()).getById(anyLong());
+        verify(repository, never()).update(any(ProductDomain.class));
+    }
+
+    @Test
+    void update_shouldThrowCustomException_whenCategoryNotFound() {
+        when(getProductByIdPort.getById(anyLong())).thenReturn(productDomain);
+        when(getCategoryByIdPort.getById(anyLong())).thenReturn(null);
+
+        CustomException exception = assertThrows(CustomException.class, () -> useCase.update(productDomain));
+
+        assertEquals(SPError.CONTROLLER_ERROR_UPDATE.getErrorCode(), exception.getErrorCode());
+        assertEquals("Category not found", exception.getErrorMessage());
+        verify(getProductByIdPort, times(1)).getById(anyLong());
+        verify(getCategoryByIdPort, times(1)).getById(anyLong());
+        verify(repository, never()).update(any(ProductDomain.class));
+    }
+
+    @Test
+    void update_shouldThrowCustomException_whenDataBaseExceptionOccurs() {
+        when(getProductByIdPort.getById(anyLong())).thenReturn(productDomain);
+        when(getCategoryByIdPort.getById(anyLong())).thenReturn(categoryDomain);
+        when(repository.update(any(ProductDomain.class))).thenThrow(new DataBaseException(SPError.DATABASE_ADAPTER_UPDATE_ERROR.getErrorCode(), "Database error"));
+
+        CustomException exception = assertThrows(CustomException.class, () -> useCase.update(productDomain));
+
+        assertEquals(SPError.DATABASE_ADAPTER_UPDATE_ERROR.getErrorCode(), exception.getErrorCode());
+        assertEquals(SPError.DATABASE_ADAPTER_UPDATE_ERROR.getErrorMessage(), exception.getErrorMessage());
+        verify(getProductByIdPort, times(1)).getById(anyLong());
+        verify(getCategoryByIdPort, times(1)).getById(anyLong());
+        verify(repository, times(1)).update(any(ProductDomain.class));
+    }
+}
+
+----- ./src/test/java/com/intcomex/intcomex_api/application/usecase/category/GetCategoryByIdUseCaseTest.java -----
+package com.intcomex.intcomex_api.application.usecase.category;
+
+import com.intcomex.intcomex_api.application.port.out.CategoryStorageRepository;
+import com.intcomex.intcomex_api.config.exception.CustomException;
+import com.intcomex.intcomex_api.config.exception.DataBaseException;
+import com.intcomex.intcomex_api.config.exception.SPError;
+import com.intcomex.intcomex_api.domain.model.CategoryDomain;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
+
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.Mockito.*;
+
+class GetCategoryByIdUseCaseTest {
+
+    @Mock
+    private CategoryStorageRepository repository;
+
+    @InjectMocks
+    private GetCategoryByIdUseCase useCase;
+
+    private CategoryDomain categoryDomain;
+
+    @BeforeEach
+    void setUp() {
+        MockitoAnnotations.openMocks(this);
+
+        categoryDomain = new CategoryDomain();
+        categoryDomain.setId(1L);
+        categoryDomain.setName("Electronics");
+        categoryDomain.setImageUrl("http://example.com/electronics.png");
+    }
+
+    @Test
+    void getById_shouldReturnCategory_whenFound() {
+        when(repository.getById(anyLong())).thenReturn(categoryDomain);
+
+        CategoryDomain result = useCase.getById(1L);
+
+        assertNotNull(result);
+        assertEquals(categoryDomain.getId(), result.getId());
+        verify(repository, times(1)).getById(anyLong());
+    }
+
+    @Test
+    void getById_shouldThrowCustomException_whenCategoryNotFound() {
+        when(repository.getById(anyLong())).thenReturn(null);
+
+        CustomException exception = assertThrows(CustomException.class, () -> useCase.getById(1L));
+
+        assertEquals(SPError.CONTROLLER_ERROR_FIND_BY_ID.getErrorCode(), exception.getErrorCode());
+        assertEquals("Category not found", exception.getErrorMessage());
+        verify(repository, times(1)).getById(anyLong());
+    }
+
+    @Test
+    void getById_shouldThrowCustomException_whenDataBaseExceptionOccurs() {
+        when(repository.getById(anyLong())).thenThrow(new DataBaseException(SPError.DATABASE_ADAPTER_FIND_ERROR.getErrorCode(), "Database error"));
+
+        CustomException exception = assertThrows(CustomException.class, () -> useCase.getById(1L));
+
+        assertEquals(SPError.DATABASE_ADAPTER_FIND_ERROR.getErrorCode(), exception.getErrorCode());
+        assertEquals(SPError.DATABASE_ADAPTER_FIND_ERROR.getErrorMessage(), exception.getErrorMessage());
+        verify(repository, times(1)).getById(anyLong());
+    }
+}
+
+----- ./src/test/java/com/intcomex/intcomex_api/application/usecase/category/DeleteCategoryUseCaseTest.java -----
+package com.intcomex.intcomex_api.application.usecase.category;
+
+import com.intcomex.intcomex_api.application.port.in.category.GetCategoryByIdPort;
+import com.intcomex.intcomex_api.application.port.out.CategoryStorageRepository;
+import com.intcomex.intcomex_api.config.exception.CustomException;
+import com.intcomex.intcomex_api.config.exception.DataBaseException;
+import com.intcomex.intcomex_api.config.exception.SPError;
+import com.intcomex.intcomex_api.domain.model.CategoryDomain;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
+
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.Mockito.*;
+
+class DeleteCategoryUseCaseTest {
+
+    @Mock
+    private CategoryStorageRepository repository;
+
+    @Mock
+    private GetCategoryByIdPort getCategoryByIdPort;
+
+    @InjectMocks
+    private DeleteCategoryUseCase useCase;
+
+    private CategoryDomain categoryDomain;
+
+    @BeforeEach
+    void setUp() {
+        MockitoAnnotations.openMocks(this);
+
+        categoryDomain = new CategoryDomain();
+        categoryDomain.setId(1L);
+        categoryDomain.setName("Electronics");
+        categoryDomain.setImageUrl("http://example.com/electronics.png");
+    }
+
+    @Test
+    void delete_shouldPerformDelete_whenCategoryExists() {
+        when(getCategoryByIdPort.getById(anyLong())).thenReturn(categoryDomain);
+        doNothing().when(repository).delete(anyLong());
+
+        assertDoesNotThrow(() -> useCase.delete(1L));
+        verify(getCategoryByIdPort, times(1)).getById(anyLong());
+        verify(repository, times(1)).delete(anyLong());
+    }
+
+    @Test
+    void delete_shouldThrowCustomException_whenCategoryNotFound() {
+        when(getCategoryByIdPort.getById(anyLong())).thenReturn(null);
+
+        CustomException exception = assertThrows(CustomException.class, () -> useCase.delete(1L));
+
+        assertEquals(SPError.CONTROLLER_ERROR_DELETE.getErrorCode(), exception.getErrorCode());
+        assertEquals("Category not found", exception.getErrorMessage());
+        verify(getCategoryByIdPort, times(1)).getById(anyLong());
+        verify(repository, never()).delete(anyLong());
+    }
+
+    @Test
+    void delete_shouldThrowCustomException_whenDataBaseExceptionOccurs() {
+        when(getCategoryByIdPort.getById(anyLong())).thenReturn(categoryDomain);
+        doThrow(new DataBaseException(SPError.DATABASE_ADAPTER_DELETE_ERROR.getErrorCode(), "Database error")).when(repository).delete(anyLong());
+
+        CustomException exception = assertThrows(CustomException.class, () -> useCase.delete(1L));
+
+        assertEquals(SPError.DATABASE_ADAPTER_DELETE_ERROR.getErrorCode(), exception.getErrorCode());
+        assertEquals(SPError.DATABASE_ADAPTER_DELETE_ERROR.getErrorMessage(), exception.getErrorMessage());
+        verify(getCategoryByIdPort, times(1)).getById(anyLong());
+        verify(repository, times(1)).delete(anyLong());
+    }
+}
+
+----- ./src/test/java/com/intcomex/intcomex_api/application/usecase/category/GetAllCategoriesUseCaseTest.java -----
+package com.intcomex.intcomex_api.application.usecase.category;
+
+import com.intcomex.intcomex_api.application.port.out.CategoryStorageRepository;
+import com.intcomex.intcomex_api.config.exception.CustomException;
+import com.intcomex.intcomex_api.config.exception.DataBaseException;
+import com.intcomex.intcomex_api.config.exception.SPError;
+import com.intcomex.intcomex_api.domain.model.CategoryDomain;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+
+import java.util.Arrays;
+import java.util.List;
+
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
+
+class GetAllCategoriesUseCaseTest {
+
+    @Mock
+    private CategoryStorageRepository repository;
+
+    @InjectMocks
+    private GetAllCategoriesUseCase useCase;
+
+    private CategoryDomain categoryDomain;
+
+    @BeforeEach
+    void setUp() {
+        MockitoAnnotations.openMocks(this);
+
+        categoryDomain = new CategoryDomain();
+        categoryDomain.setId(1L);
+        categoryDomain.setName("Electronics");
+        categoryDomain.setImageUrl("http://example.com/electronics.png");
+    }
+
+    @Test
+    void getAll_shouldReturnListOfCategories_whenSuccessful() {
+        when(repository.getAll()).thenReturn(Arrays.asList(categoryDomain));
+
+        List<CategoryDomain> result = useCase.getAll();
+
+        assertNotNull(result);
+        assertEquals(1, result.size());
+        assertEquals(categoryDomain.getId(), result.get(0).getId());
+        verify(repository, times(1)).getAll();
+    }
+
+    @Test
+    void getAll_shouldThrowCustomException_whenDataBaseExceptionOccurs() {
+        when(repository.getAll()).thenThrow(new DataBaseException(SPError.DATABASE_ADAPTER_FIND_ERROR.getErrorCode(), "Database error"));
+
+        CustomException exception = assertThrows(CustomException.class, () -> useCase.getAll());
+
+        assertEquals(SPError.DATABASE_ADAPTER_FIND_ERROR.getErrorCode(), exception.getErrorCode());
+        assertEquals(SPError.DATABASE_ADAPTER_FIND_ERROR.getErrorMessage(), exception.getErrorMessage());
+        verify(repository, times(1)).getAll();
+    }
+
+    @Test
+    void getAllPaginated_shouldReturnPageOfCategories_whenSuccessful() {
+        Pageable pageable = PageRequest.of(0, 10);
+        Page<CategoryDomain> page = new PageImpl<>(Arrays.asList(categoryDomain));
+        when(repository.getAllPaginated(0, 10)).thenReturn(page);
+
+        Page<CategoryDomain> result = useCase.getAllPaginated(0, 10);
+
+        assertNotNull(result);
+        assertEquals(1, result.getContent().size());
+        assertEquals(categoryDomain.getId(), result.getContent().get(0).getId());
+        verify(repository, times(1)).getAllPaginated(0, 10);
+    }
+
+    @Test
+    void getAllPaginated_shouldThrowCustomException_whenDataBaseExceptionOccurs() {
+        when(repository.getAllPaginated(0, 10)).thenThrow(new DataBaseException(SPError.DATABASE_ADAPTER_FIND_ERROR.getErrorCode(), "Database error"));
+
+        CustomException exception = assertThrows(CustomException.class, () -> useCase.getAllPaginated(0, 10));
+
+        assertEquals(SPError.DATABASE_ADAPTER_FIND_ERROR.getErrorCode(), exception.getErrorCode());
+        assertEquals(SPError.DATABASE_ADAPTER_FIND_ERROR.getErrorMessage(), exception.getErrorMessage());
+        verify(repository, times(1)).getAllPaginated(0, 10);
+    }
+}
+
+----- ./src/test/java/com/intcomex/intcomex_api/application/usecase/category/CreateCategoryUseCaseTest.java -----
+package com.intcomex.intcomex_api.application.usecase.category;
+
+import com.intcomex.intcomex_api.application.port.out.CategoryStorageRepository;
+import com.intcomex.intcomex_api.config.exception.CustomException;
+import com.intcomex.intcomex_api.config.exception.DataBaseException;
+import com.intcomex.intcomex_api.config.exception.SPError;
+import com.intcomex.intcomex_api.domain.model.CategoryDomain;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
+
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
+
+class CreateCategoryUseCaseTest {
+
+    @Mock
+    private CategoryStorageRepository repository;
+
+    @InjectMocks
+    private CreateCategoryUseCase useCase;
+
+    private CategoryDomain categoryDomain;
+
+    @BeforeEach
+    void setUp() {
+        MockitoAnnotations.openMocks(this);
+
+        categoryDomain = new CategoryDomain();
+        categoryDomain.setId(1L);
+        categoryDomain.setName("Electronics");
+        categoryDomain.setImageUrl("http://example.com/electronics.png");
+    }
+
+    @Test
+    void create_shouldReturnSavedCategory_whenSuccessful() {
+        when(repository.save(any(CategoryDomain.class))).thenReturn(categoryDomain);
+
+        CategoryDomain result = useCase.create(categoryDomain);
+
+        assertNotNull(result);
+        assertEquals(categoryDomain.getId(), result.getId());
+        verify(repository, times(1)).save(any(CategoryDomain.class));
+    }
+
+    @Test
+    void create_shouldThrowCustomException_whenDataBaseExceptionOccurs() {
+        when(repository.save(any(CategoryDomain.class))).thenThrow(new DataBaseException(SPError.DATABASE_ADAPTER_SAVE_ERROR.getErrorCode(), "Database error"));
+
+        CustomException exception = assertThrows(CustomException.class, () -> useCase.create(categoryDomain));
+
+        assertEquals(SPError.DATABASE_ADAPTER_SAVE_ERROR.getErrorCode(), exception.getErrorCode());
+        assertEquals(SPError.DATABASE_ADAPTER_SAVE_ERROR.getErrorMessage(), exception.getErrorMessage());
+        verify(repository, times(1)).save(any(CategoryDomain.class));
+    }
+}
+
+----- ./src/test/java/com/intcomex/intcomex_api/application/usecase/category/UpdateCategoryUseCaseTest.java -----
+package com.intcomex.intcomex_api.application.usecase.category;
+
+import com.intcomex.intcomex_api.application.port.in.category.GetCategoryByIdPort;
+import com.intcomex.intcomex_api.application.port.out.CategoryStorageRepository;
+import com.intcomex.intcomex_api.config.exception.CustomException;
+import com.intcomex.intcomex_api.config.exception.DataBaseException;
+import com.intcomex.intcomex_api.config.exception.SPError;
+import com.intcomex.intcomex_api.domain.model.CategoryDomain;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
+
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.Mockito.*;
+
+class UpdateCategoryUseCaseTest {
+
+    @Mock
+    private CategoryStorageRepository repository;
+
+    @Mock
+    private GetCategoryByIdPort getCategoryByIdPort;
+
+    @InjectMocks
+    private UpdateCategoryUseCase useCase;
+
+    private CategoryDomain categoryDomain;
+
+    @BeforeEach
+    void setUp() {
+        MockitoAnnotations.openMocks(this);
+
+        categoryDomain = new CategoryDomain();
+        categoryDomain.setId(1L);
+        categoryDomain.setName("Electronics");
+        categoryDomain.setImageUrl("http://example.com/electronics.png");
+    }
+
+    @Test
+    void update_shouldReturnUpdatedCategory_whenSuccessful() {
+        when(getCategoryByIdPort.getById(anyLong())).thenReturn(categoryDomain);
+        when(repository.update(any(CategoryDomain.class))).thenReturn(categoryDomain);
+
+        CategoryDomain result = useCase.update(categoryDomain);
+
+        assertNotNull(result);
+        assertEquals(categoryDomain.getId(), result.getId());
+        verify(getCategoryByIdPort, times(1)).getById(anyLong());
+        verify(repository, times(1)).update(any(CategoryDomain.class));
+    }
+
+    @Test
+    void update_shouldThrowCustomException_whenCategoryNotFound() {
+        when(getCategoryByIdPort.getById(anyLong())).thenReturn(null);
+
+        CustomException exception = assertThrows(CustomException.class, () -> useCase.update(categoryDomain));
+
+        assertEquals(SPError.CONTROLLER_ERROR_UPDATE.getErrorCode(), exception.getErrorCode());
+        assertEquals("Category not found", exception.getErrorMessage());
+        verify(getCategoryByIdPort, times(1)).getById(anyLong());
+        verify(repository, never()).update(any(CategoryDomain.class));
+    }
+
+    @Test
+    void update_shouldThrowCustomException_whenDataBaseExceptionOccurs() {
+        when(getCategoryByIdPort.getById(anyLong())).thenReturn(categoryDomain);
+        when(repository.update(any(CategoryDomain.class))).thenThrow(new DataBaseException(SPError.DATABASE_ADAPTER_UPDATE_ERROR.getErrorCode(), "Database error"));
+
+        CustomException exception = assertThrows(CustomException.class, () -> useCase.update(categoryDomain));
+
+        assertEquals(SPError.DATABASE_ADAPTER_UPDATE_ERROR.getErrorCode(), exception.getErrorCode());
+        assertEquals(SPError.DATABASE_ADAPTER_UPDATE_ERROR.getErrorMessage(), exception.getErrorMessage());
+        verify(getCategoryByIdPort, times(1)).getById(anyLong());
+        verify(repository, times(1)).update(any(CategoryDomain.class));
+    }
+}
+
+----- ./src/test/resources/application-test.yml -----
+spring:
+  datasource:
+    url: jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+    platform: h2
+  h2:
+    console:
+      enabled: true
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+
+----- ./src/test/resources/schema.sql -----
+CREATE TABLE category (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    image_url VARCHAR(255) NOT NULL
+);
+
+CREATE TABLE product (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    price DECIMAL NOT NULL,
+    category_id BIGINT NOT NULL,
+    CONSTRAINT fk_category FOREIGN KEY (category_id) REFERENCES category(id)
+);
+
+----- ./src/test/resources/data.sql -----
+INSERT INTO category (name, image_url) VALUES ('Electronics', 'http://example.com/electronics.png');
+----- ./output.txt -----
+
+----- ./Dockerfile -----
+FROM openjdk:17-jdk-slim
+
+WORKDIR /app
+
+COPY build.gradle settings.gradle /app/
+
+COPY gradle /app/gradle
+
+RUN ./gradlew build || return 0
+
+COPY . /app
+
+RUN ./gradlew build
+
+EXPOSE 8080
+
+CMD ["java", "-jar", "build/libs/intcomex-api-0.0.1-SNAPSHOT.jar"]
+
+----- ./postman/intcomex.postman_collection.json -----
+{
+	"info": {
+		"_postman_id": "c72ef1c8-1cd6-4f59-9b43-d2dd73ce301b",
+		"name": "intcomex",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "25756408"
+	},
+	"item": [
+		{
+			"name": "category",
+			"item": [
+				{
+					"name": "create_category",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"SERVIDORES\",\n    \"imageUrl\": \"http://intcomex.s3.aws.com\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:8080/intcomex-api/category",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"intcomex-api",
+								"category"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "update_category",
+					"request": {
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"SERVIDORES\",\n    \"imageUrl\": \"http://intcomex.s3.aws.com\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:8080/intcomex-api/category/1",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"intcomex-api",
+								"category",
+								"1"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "get_all_categories",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8080/intcomex-api/category",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"intcomex-api",
+								"category"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "get_by_id_category",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8080/intcomex-api/categories/1",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"intcomex-api",
+								"categories",
+								"1"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "delete_category",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8080/intcomex-api/category/2",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"intcomex-api",
+								"category",
+								"2"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "product",
+			"item": [
+				{
+					"name": "create_product",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"prueba\",\n    \"price\": 10000.00,    \n    \"category\": {\n        \"id\": 2\n    }\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:8080/intcomex-api/product",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"intcomex-api",
+								"product"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "update_product",
+					"request": {
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"prueba\",\n    \"price\": 1120.00,    \n    \"category\": {\n        \"id\": 2\n    }\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:8080/intcomex-api/product/1",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"intcomex-api",
+								"product",
+								"1"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "get_all_products",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8080/intcomex-api/product?page=0&size=10",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"intcomex-api",
+								"product"
+							],
+							"query": [
+								{
+									"key": "page",
+									"value": "0"
+								},
+								{
+									"key": "size",
+									"value": "10"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "get_by_id_product",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8080/intcomex-api/product/1",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"intcomex-api",
+								"product",
+								"1"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "delete_category",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8080/intcomex-api/product/1",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"intcomex-api",
+								"product",
+								"1"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "testing",
+			"item": [
+				{
+					"name": "create_category_servidores",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"let jsonData = pm.response.json();",
+									"pm.environment.set(\"servidoresCategoryId\", jsonData.data.id);",
+									"postman.setNextRequest(\"create_category_cloud\");",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"SERVIDORES\",\n    \"imageUrl\": \"http://intcomex.s3.aws.com\"\n}\n",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:8080/intcomex-api/category",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"intcomex-api",
+								"category"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "create_category_cloud",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"let jsonData = pm.response.json();",
+									"pm.environment.set(\"cloudCategoryId\", jsonData.data.id);",
+									"postman.setNextRequest(\"create_products_batch\");",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"CLOUD\",\n    \"imageUrl\": \"http://intcomex.s3.aws.com\"\n}\n",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:8080/intcomex-api/category",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"intcomex-api",
+								"category"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "create_products_batch",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"let servidoresCategoryId = pm.environment.get(\"servidoresCategoryId\");",
+									"let cloudCategoryId = pm.environment.get(\"cloudCategoryId\");",
+									"",
+									"if (!servidoresCategoryId || !cloudCategoryId) {",
+									"    postman.setNextRequest(\"create_category_servidores\");",
+									"} else {",
+									"    let products = [];",
+									"    for (let i = 0; i < 100000; i++) {",
+									"        let categoryId = i % 2 === 0 ? servidoresCategoryId : cloudCategoryId;",
+									"        products.push({",
+									"            \"name\": \"Product \" + i,",
+									"            \"price\": Math.floor(Math.random() * 1000) + 1,",
+									"            \"category\": {",
+									"                \"id\": categoryId",
+									"            }",
+									"        });",
+									"    }",
+									"",
+									"    // Dividir los productos en lotes de 100",
+									"    let productBatches = [];",
+									"    for (let i = 0; i < products.length; i += 100) {",
+									"        productBatches.push(products.slice(i, i + 100));",
+									"    }",
+									"",
+									"    pm.environment.set(\"productBatches\", JSON.stringify(productBatches));",
+									"    pm.environment.set(\"currentBatchIndex\", 0);",
+									"    postman.setNextRequest(\"send_product\");",
+									"}",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "\n",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:8080/intcomex-api/prepare-products",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"intcomex-api",
+								"prepare-products"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "send_product",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"let productBatches = JSON.parse(pm.environment.get(\"productBatches\"));",
+									"let currentBatchIndex = pm.environment.get(\"currentBatchIndex\");",
+									"",
+									"if (currentBatchIndex < productBatches.length) {",
+									"    let currentBatch = productBatches[currentBatchIndex];",
+									"",
+									"    if (currentBatch.length > 0) {",
+									"        let currentProduct = currentBatch.shift();",
+									"",
+									"        // Actualizar el lote en el ambiente",
+									"        productBatches[currentBatchIndex] = currentBatch;",
+									"        pm.environment.set(\"productBatches\", JSON.stringify(productBatches));",
+									"        ",
+									"        // Si el lote actual está vacío, pasar al siguiente lote",
+									"        if (currentBatch.length === 0) {",
+									"            currentBatchIndex++;",
+									"            pm.environment.set(\"currentBatchIndex\", currentBatchIndex);",
+									"        }",
+									"",
+									"        // Configurar el producto actual en el ambiente",
+									"        pm.environment.set(\"currentProduct\", JSON.stringify(currentProduct));",
+									"",
+									"        // Continuar con la siguiente solicitud",
+									"        postman.setNextRequest(\"create_product\");",
+									"    } else {",
+									"        currentBatchIndex++;",
+									"        pm.environment.set(\"currentBatchIndex\", currentBatchIndex);",
+									"        postman.setNextRequest(\"send_product\");",
+									"    }",
+									"} else {",
+									"    postman.setNextRequest(null); // Finalizar la ejecución",
+									"}",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{{currentBatch}}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:8080/intcomex-api/prepare-products",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"intcomex-api",
+								"prepare-products"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "create_product",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"postman.setNextRequest(\"send_product\");"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{{currentProduct}}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:8080/intcomex-api/product",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"intcomex-api",
+								"product"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		}
+	]
+}
+----- ./settings.gradle -----
+rootProject.name = 'intcomex-api'
+
+----- ./docker-compose.yml -----
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:13
+    container_name: intcomex-postgres
+    environment:
+      POSTGRES_DB: intcomex
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  intcomex-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: intcomex-api
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/intcomex_api
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: postgres
+    ports:
+      - "8080:8080"
+    depends_on:
+      - postgres
+
+volumes:
+  postgres_data:
+

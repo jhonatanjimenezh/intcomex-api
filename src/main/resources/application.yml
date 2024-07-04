@@ -1,0 +1,27 @@
+spring:
+  application:
+    name: intcomex-api
+    title: intcomex-api
+  datasource:
+    url: ${SPRING_DATASOURCE_URL}
+    driverClassName: "org.postgresql.Driver"
+    username: ${SPRING_DATASOURCE_USERNAME}
+    password: ${SPRING_DATASOURCE_PASSWORD}
+  jpa:
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    show-sql: false
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        format_sql: true
+
+server:
+  servlet:
+    context-path: /intcomex-api
+
+logging:
+  level:
+    root: INFO
+    org.springframework: INFO
+    org.hibernate: INFO

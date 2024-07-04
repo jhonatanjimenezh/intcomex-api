@@ -1,0 +1,1 @@
+INSERT INTO category (name, image_url) VALUES ('Electronics', 'http://example.com/electronics.png');
